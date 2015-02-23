@@ -9,8 +9,11 @@ var https = require('https');
 var url = require('url');
 var spawn = require('child_process').spawn;
 var fs = require('fs');
+var path = require('path');
 var md5 = require( 'blueimp-md5');
 var prompt = require( 'prompt');
+
+var md5jspath = path.dirname( require.resolve('blueimp-md5') );
 
 var schema = {
     properties: {
@@ -35,9 +38,9 @@ prompt.get(schema, function( err, result ) {
 });
             
 
-function serveStaticJs( filename, response ) {
-    var filepath = __dirname + '/' + filename;
-    console.log( 'filepath: [' + filepath + ']');
+function serveStaticJs( filepath, response ) {
+    var filepath = filepath;
+//    console.log( 'filepath: [' + filepath + ']');
     var stat = fs.statSync( filepath );
     response.writeHead(200, { 'Content-Type': 'text/javascript', 'Content-Length': stat.size });
     var readStream = fs.createReadStream( filepath );
@@ -51,7 +54,7 @@ function serveStaticJs( filename, response ) {
 
 function serverFunction( request, response ) {
     var path = url.parse( request.url ).pathname;
-    // console.log('path: [' + path + ']');
+    console.log('received request: ' + request.url );
     if( path == '/' ) {
         response.writeHead(200, {'Content-type': 'text/html; charset=   utf-8' });
         var queryData = url.parse( request.url, true ).query;
@@ -96,9 +99,13 @@ function serverFunction( request, response ) {
                 response.write('password invalid');
                 response.end();
             } else {
-                args = args.split(' ');
-                response.write('args: ' + args + '<br />\n' );
-                var cmdobj = spawn( cmd, args );
+                if( args != '' ) {
+                    args = args.split(' ');
+                    response.write('args: ' + args + '<br />\n' );
+                    var cmdobj = spawn( cmd, args );
+                } else {
+                    var cmdobj = spawn( cmd, [] );
+                }
                 cmdobj.on('exit', function(code) {
                     response.write('done, code: ' + code );
                     response.end();
@@ -116,7 +123,7 @@ function serverFunction( request, response ) {
             response.end();
         }
     } else if( path == '/md5.min.js' ) {
-        serveStaticJs( 'node_modules/blueimp-md5/js/md5.min.js', response);
+        serveStaticJs( md5jspath + '/md5.min.js', response);
     } else {
         response.write('page ' + path + ' not known');
         response.end();
@@ -129,10 +136,11 @@ function startServer() {
             key: fs.readFileSync( __dirname + '/key.pem' ),
             cert: fs.readFileSync( __dirname + '/cert.pem' )
         };
-        console.log('key.pem and cert.pem detected: using https protocol, use https:// to connect');
         https.createServer( options, serverFunction ).listen(8888);
+        console.log('key.pem and cert.pem detected: started using https protocol, use https:// to connect, port 8888');
     } else {
         http.createServer( serverFunction ).listen(8888);
+        console.log('started using http protocol, use http:// to connect, port 8888');
     }
 }
 
