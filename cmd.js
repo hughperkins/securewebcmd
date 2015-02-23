@@ -5,6 +5,7 @@
 // obtain one at http://mozilla.org/MPL/2.0/.
 
 var http = require('http');
+var https = require('https');
 var url = require('url');
 var spawn = require('child_process').spawn;
 var fs = require('fs');
@@ -28,6 +29,8 @@ prompt.get(schema, function( err, result ) {
     password = result.password;
     if( password != result.passwordcheck ) {
         console.log("error: password mismatch");
+    } else {
+        startServer();
     }
 });
             
@@ -46,7 +49,7 @@ function serveStaticJs( filename, response ) {
     });
 }
 
-http.createServer( function( request, response ) {
+function serverFunction( request, response ) {
     var path = url.parse( request.url ).pathname;
     // console.log('path: [' + path + ']');
     if( path == '/' ) {
@@ -118,6 +121,18 @@ http.createServer( function( request, response ) {
         response.write('page ' + path + ' not known');
         response.end();
     }
-}).listen(8888);
+}
 
+function startServer() {
+    if( fs.existsSync( __dirname + '/key.pem' ) && fs.existsSync( __dirname + '/cert.pem' ) ) {
+        var options = {
+            key: fs.readFileSync( __dirname + '/key.pem' ),
+            cert: fs.readFileSync( __dirname + '/cert.pem' )
+        };
+        console.log('key.pem and cert.pem detected: using https protocol, use https:// to connect');
+        https.createServer( options, serverFunction ).listen(8888);
+    } else {
+        http.createServer( serverFunction ).listen(8888);
+    }
+}
 

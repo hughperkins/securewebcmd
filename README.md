@@ -28,3 +28,25 @@ No. Not encrypted, simply, one needs to know the password, if one wants the requ
 
 No.  If someone can change the traffic en-route, they can change the javascript sent to the browser.
 
+# Can I use https?
+
+Why, yes, you can :-)  Do the following, from inside the `securewebcmd` directory:
+```bash
+openssl genrsa -out key.pem
+openssl req -new -key key.pem -out csr.pem
+openssl x509 -req -days 9999 -in csr.pem -signkey key.pem -out cert.pem
+rm csr.pem
+```
+... then restart the securewebcmd nodejs server
+... and connect to [https://localhost:8888](https://localhost:8888), instead of [http://localhost:8888](http://localhost:8888)
+* since it is using a self-signed certificate, you will need to accept the warnings that appear
+
+# If I use https, can people do a man-in-the middle attack etc now?
+
+Hmmm, yeah, kind of, if you have no way of checking the self-signed certificate in the browser is the same one you generated, which in general one just clicks 'accept'.
+
+# So why don't I just not use https, and stick with the md5 hash?
+
+Yes, right, good question :-)
+
+
