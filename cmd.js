@@ -9,8 +9,8 @@ var https = require('https');
 var url = require('url');
 var spawn = require('child_process').spawn;
 var fs = require('fs');
-var md5 = require(__dirname + '/node_modules/blueimp-md5');
-var prompt = require( __dirname + '/node_modules/prompt');
+var md5 = require( 'blueimp-md5');
+var prompt = require( 'prompt');
 
 var schema = {
     properties: {
