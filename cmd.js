@@ -93,8 +93,8 @@ function handleRequest( queryDic, response ) {
     response.write('<body>');
     response.write('<form name="myform" method="post" action="/">');
     response.write('check: <input type="hidden" id="check" name="check" value=""></input>');
-    response.write('dir: <input type="text" id="dir" name="dir" value="' + dir + '" onKeydown="Javascript: if (event.keyCode==13) go();"></input><br/>');
-    response.write('cmd: <input type="text" id="cmd" name="cmd" value="' + cmd + '" onKeydown="Javascript: if (event.keyCode==13) go();"></input><br/>');
+    response.write('dir: <input type="text" size="60" id="dir" name="dir" value="' + dir + '" onKeydown="Javascript: if (event.keyCode==13) go();"></input><br/>');
+    response.write('cmd: <input size="140" type="text" id="cmd" name="cmd" value="' + cmd + '" onKeydown="Javascript: if (event.keyCode==13) go();"></input><br/>');
 //    response.write('args: <input type="text" id="args" name="args" value="' + args + '" onKeydown="Javascript: if (event.keyCode==13) go();"></input>');
     if( isSsl ) {
         response.write('pass: <input type="password" id="pass" name="pass" value="' + queryDic.pass + '" onKeydown="Javascript: if (event.keyCode==13) go();"></input>');
