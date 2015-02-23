@@ -9,7 +9,7 @@ nodejs node_modules/securewebcmd
 ```
 ... then type in the password twice
 
-* Connect to the server from a webbrowser, at point 8888, ie [http://localhost:8888]
+* Connect to the server from a webbrowser, at point 8888, ie [http://localhost:8888](http://localhost:8888)
 * Type in a command, some arguments, fill in the password, and press 'enter'
 * the command should run, on the server, and the results be returned
 
