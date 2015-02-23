@@ -89,8 +89,13 @@ function serverFunction( request, response ) {
         response.write('check: <input type="hidden" id="check" name="check" value=""></input>');
         response.write('cmd: <input type="text" id="cmd" name="cmd" value="' + cmd + '" onKeydown="Javascript: if (event.keyCode==13) go();"></input>');
         response.write('args: <input type="text" id="args" name="args" value="' + args + '" onKeydown="Javascript: if (event.keyCode==13) go();"></input>');
+        if( isSsl ) {
+            response.write('pass: <input type="password" id="pass" name="pass" value="' + queryData.pass + '" onKeydown="Javascript: if (event.keyCode==13) go();"></input>');
+        }
         response.write('</form>');
-        response.write('pass: <input type="password" id="pass" name="pass"  onKeydown="Javascript: if (event.keyCode==13) go();"></input>');
+        if( !isSsl ) {
+            response.write('pass: <input type="password" id="pass" name="pass"  onKeydown="Javascript: if (event.keyCode==13) go();"></input>');
+        }
         response.write('<input type="button" value="Submit" onclick="go()" /><br />\n');
         response.write('cmd: ' + cmd + '<br />\n' );
 
@@ -117,6 +122,12 @@ function serverFunction( request, response ) {
                 cmdobj.stdout.on('data', function(data) {
                     response.write( String(data).split('\n').join('<br/>\n' ).replace(/ /g, '&nbsp;' ) );
                 });
+                cmdobj.stderr.on('data', function(data) {
+                    response.write( 'stderr: ' + String(data).split('\n').join('<br/>\n' ).replace(/ /g, '&nbsp;' ) );
+                });
+                cmdobj.on('close', function (code) {
+                    response.write('child process exited with code ' + code);
+                });
             }
         } else {
             response.write('</body><html>');
@@ -130,12 +141,15 @@ function serverFunction( request, response ) {
     }
 }
 
+var isSsl = false;
+
 function startServer() {
     if( fs.existsSync( __dirname + '/key.pem' ) && fs.existsSync( __dirname + '/cert.pem' ) ) {
         var options = {
             key: fs.readFileSync( __dirname + '/key.pem' ),
             cert: fs.readFileSync( __dirname + '/cert.pem' )
         };
+        isSsl = true;
         https.createServer( options, serverFunction ).listen(8888);
         console.log('key.pem and cert.pem detected: started using https protocol, use https:// to connect, port 8888');
     } else {

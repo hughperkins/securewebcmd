@@ -15,7 +15,7 @@ npm start securewebcmd
 
 # How is it secured, since it's using http?
 
-* the password isn't sent to the server, it's used to generate an md5 hash of the command and its arguments
+* in http mode, the password isn't sent to the server, it's used to generate an md5 hash of the command and its arguments
 * the hash is sent to the server
 * the server recreates the hash, based on the password you typed when you started the server, the command, and the arguments
 * if the hash doesnt match the one your client sent, the request is ignored, otherwise it runs, and the results are piped back to the internet browser
@@ -47,6 +47,6 @@ Hmmm, yeah, kind of, if you have no way of checking the self-signed certificate 
 
 # So why don't I just not use https, and stick with the md5 hash?
 
-Yes, right, good question :-)
+In https mode, the entered password will be transmitted over the ssl connection, in both directions, and re-populate the password field in the form, so you won't need to keep re-entering the password each time.  This is more or less secure, since the connection is using ssl, and easier to use.
 
 
