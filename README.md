@@ -24,3 +24,7 @@ nodejs node_modules/securewebcmd
 
 No. Not encrypted, simply, one needs to know the password, if one wants the request sent to the server to be executed on the server.  The request and the results themselves are sent in clear.
 
+# Is it secure from a man-in-middle attack?
+
+No.  If someone can change the traffic en-route, they can change the javascript sent to the browser.
+
