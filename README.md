@@ -10,8 +10,10 @@ npm start securewebcmd
 ... then type in the password twice
 
 * Connect to the server from a webbrowser, at port 8888, ie [localhost://http:8888](http://localhost:8888)
-* Type in a command, some arguments, fill in the password, and press 'enter'
+* Type in a command, fill in the password, and press 'enter'
 * the command should run, on the server, and the results be returned
+* you can change the directory in the 'dir' textbox
+* you can kill the command, by opening a second browser window, and sending an appropriate `killall` command.
 
 # How is it secured, since it's using http?
 
