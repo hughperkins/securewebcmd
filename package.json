@@ -1,0 +1,29 @@
+{
+  "name": "securewebcmd",
+  "version": "1.0.0",
+  "description": "Run commands on a linux server through a nodejs server",
+  "main": "cmd.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/hughperkins/securewebcmd.git"
+  },
+  "keywords": [
+    "web",
+    "cmd",
+    "secure",
+    "linux",
+    "nodejs"
+  ],
+  "dependencies": {
+    "prompt": "~0.2.14",
+    "blueimp-md5": "~1.1.0"
+  },
+  "author": "Hugh Perkins",
+  "license": "MPL",
+  "bugs": {
+    "url": "https://github.com/hughperkins/securewebcmd/issues"
+  }
+}
