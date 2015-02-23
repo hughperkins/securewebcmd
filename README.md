@@ -5,7 +5,7 @@ Execute commands on a linux server through a webpage. Secured using md5 hashing.
 
 ```bash
 npm install securewebcmd
-nodejs node_modules/securewebcmd
+npm start securewebcmd
 ```
 ... then type in the password twice
 

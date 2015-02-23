@@ -1,6 +1,6 @@
 {
   "name": "securewebcmd",
-  "version": "1.1.0",
+  "version": "1.1.4",
   "description": "Run commands on a linux server through a nodejs server",
   "main": "cmd.js",
   "scripts": {
@@ -17,9 +17,15 @@
     "linux",
     "nodejs"
   ],
+  "scripts": {
+     "start": "nodejs cmd.js",
+     "securewebcmd": "nodejs cmd.js"
+  },
   "dependencies": {
     "prompt": "~0.2.14",
-    "blueimp-md5": "~1.1.0"
+    "blueimp-md5": "~1.1.0",
+    "fs": "0.0.2",
+    "http": "0.0.0"
   },
   "author": "Hugh Perkins",
   "license": "MPL",
