@@ -17,21 +17,19 @@ function kill( id ) {
     });
 }
 function refreshJobs() {
-    $('#jobs').html('');
     $.get( '/jobs', {}, function( response ) {
         //console.log( response );
         var jobs = JSON.parse( response );
         console.log( jobs.length );
+        var newHtml = '';
         for( var i = 0; i < jobs.length; i++ ) {
             var job = jobs[i];
-            addJobToHtml( job );
+            newHtml += jobToHtml( job ) + '<br />';
         }
-        //$('input.tail').click( function( event ) {
-        //    console.log( this );
-        //});
+        $('#jobs').html(newHtml);
     });
 }
-function addJobToHtml( job ) {
+function jobToHtml( job ) {
     console.log( job );
     var argsstring = '';
     if( typeof job.args != 'undefined' ) {
@@ -39,11 +37,16 @@ function addJobToHtml( job ) {
     }
     var jobhtml = job.id + ' ' + job.cmd + ' ' + argsstring;
     //jobhtml += ' ' + job.done;
-    jobhtml += '&nbsp;&nbsp;&nbsp;<input type="button" class="tail" value="results" onclick="tail(' + job.id + ');" />';
     if( !job.done ) { 
+        jobhtml += '&nbsp;&nbsp;&nbsp;<input type="button" class="tail" value="tail" onclick="tail(' + job.id + ');" />';
         jobhtml += '<input type="button" class="kill" value="kill" onclick="kill(' + job.id + ');" />';
+    } else {
+        jobhtml += '&nbsp;&nbsp;&nbsp;<input type="button" class="tail" value="results" onclick="tail(' + job.id + ');" />';
     }
-    $('#jobs').append( jobhtml + '<br />' );
+    return jobhtml;
+}
+function addJobToHtml( job ) {
+    $('#jobs').append( jobToHtml(job) + '<br />' );
 }
 $( function() {
     var oldLength = 0;
