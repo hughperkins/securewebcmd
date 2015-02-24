@@ -16,6 +16,9 @@ var querystring = require('querystring');
 
 var md5jspath = path.dirname( require.resolve('blueimp-md5') );
 
+var nextJob = 0;
+var jobs = [];
+
 var schema = {
     properties: {
         password: {
@@ -39,11 +42,11 @@ prompt.get(schema, function( err, result ) {
 });
             
 
-function serveStaticJs( filepath, response ) {
+function serveStatic( filepath, type, response ) {
     var filepath = filepath;
 //    console.log( 'filepath: [' + filepath + ']');
     var stat = fs.statSync( filepath );
-    response.writeHead(200, { 'Content-Type': 'text/javascript', 'Content-Length': stat.size });
+    response.writeHead(200, { 'Content-Type': type, 'Content-Length': stat.size });
     var readStream = fs.createReadStream( filepath );
     readStream.on('open', function() {
         readStream.pipe( response );
@@ -51,6 +54,14 @@ function serveStaticJs( filepath, response ) {
     readStream.on('error', function(err) {
         response.end(err);
     });
+}
+
+function serveStaticJs( filepath, response ) {
+    serveStatic( filepath, 'text/javascript', response );
+}
+
+function serveStaticHtml( filepath, response ) {
+    serveStatic( filepath, 'text/html', response );
 }
 
 function handleRequest( queryDic, response ) {
@@ -66,7 +77,7 @@ function handleRequest( queryDic, response ) {
     console.log(cmd);
     var check = queryDic.check;
     var ourcheck = md5.md5(password + '||' + dir + '||' + cmd );
-    response.writeHead(200, {'Content-type': 'text/html; charset=   utf-8' });
+    response.writeHead(200, {'Content-type': 'text/html; charset=utf-8' });
     console.log(check);
     console.log(ourcheck);
 //    if( typeof args == 'undefined' ) {
@@ -91,6 +102,12 @@ function handleRequest( queryDic, response ) {
     response.write('</script>');
     response.write('</head>');
     response.write('<body>');
+//    for( var i = 0; i < jobs.length; i++ ) {
+//        response.write( jobs[i].cmd + '<form name="results"' + i + '" method="post" action="showresults">');
+//        response.write( '<input type="hidden" name=
+//        showresults?jobid=' + i + '</a><br/>' );
+//        response.write( '</form>' );
+//    }
     response.write('<form name="myform" method="post" action="/">');
     response.write('check: <input type="hidden" id="check" name="check" value=""></input>');
     response.write('dir: <input type="text" size="60" id="dir" name="dir" value="' + dir + '" onKeydown="Javascript: if (event.keyCode==13) go();"></input><br/>');
@@ -110,6 +127,10 @@ function handleRequest( queryDic, response ) {
             response.write('password invalid');
             response.end();
         } else {
+            var job = {};
+            job['cmd'] = cmd;
+            jobs[nextJob] = job;
+            nextJob++;
             var splitcmd = cmd.split(' ' );
             var cmd1 = splitcmd[0];
             response.write('cmd: ' + cmd + '<br />\n' );
@@ -120,36 +141,62 @@ function handleRequest( queryDic, response ) {
             } else {
                 var cmdobj = spawn( cmd1, options );
             }
-//            response.write('args len: ' + splitcmd.length + '<br />\//            response.write('cmd1: ' + cmd1 + '<br />\n' );
-//            response.write('args: ' + args + '<br />\n' );' );
-//            if( args != '' ) {
-//                args = args.split(' ');
-//                response.write('args: ' + args + '<br />\n' );
-//                var cmdobj = spawn( cmd, args );
-//            } else {
-//                var cmdobj = spawn( cmd, [] );
-//            }
+            job.cmdobj = cmdobj;
+            job.cmd1 = cmd1;
+            job.args = args;
+            job.results = '';
             cmdobj.on('exit', function(code) {
                 response.write('done, code: ' + code );
                 response.end();
+                job.finished = true;
             });
             cmdobj.on('error', function(code) {
                 response.write('error, code: ' + code );
                 response.end();
+                job.finished = true;
             });
             cmdobj.stdout.on('data', function(data) {
-                response.write( String(data).split('\n').join('<br/>\n' ).replace(/ /g, '&nbsp;' ) );
+                var thisresult = String(data).split('\n').join('<br/>\n' ).replace(/ /g, '&nbsp;' );
+                job.results += thisresult;
+                response.write( thisresult );
             });
             cmdobj.stderr.on('data', function(data) {
                 response.write( 'stderr: ' + String(data).split('\n').join('<br/>\n' ).replace(/ /g, '&nbsp;' ) );
             });
             cmdobj.on('close', function (code) {
                 response.write('child process exited with code ' + code);
+                job.finished = true;
             });
         }
     } else {
         response.write('</body><html>');
         response.end();
+    }
+}
+
+function getQueryDic( request, callback ) {
+    if( request.method == 'POST' ) {
+        var queryData = '';
+        var queryDic = '';
+        request.on('data', function(data ) {
+            queryData += data;
+//            if( queryData.length > 1e6 ) {
+//                queryData = '';
+////                response.writeHead(413, {'Content-Type': 'text/plain'}).end();
+//                request.connection.destroy();
+//            }
+        });
+        request.on('end', function() {
+            queryDic = querystring.parse(queryData);
+            request.queryDic = queryDic;
+            callback( queryDic );
+            //handleRequest(queryDic, response );
+        });
+    } else {
+        var queryDic = url.parse( request.url, true ).query;
+        request.queryDic = queryDic;
+        callback( queryDic );
+        //handleRequest( queryData, response );
     }
 }
 
@@ -176,8 +223,72 @@ function serverFunction( request, response ) {
             var queryData = url.parse( request.url, true ).query;
             handleRequest( queryData, response );
         }
+    } else if( path == '/run' ) {
+        getQueryDic( request, function( queryDic ) {
+            response.writeHead(200, {'Content-type': 'text/html; charset=utf-8' });
+            response.write('hey. Response from cmd.js!');
+            var cmd = queryDic.cmd;
+            var dir = queryDic.dir;
+            var theirCheck = queryDic.check;
+            response.write('cmd: ' + cmd );
+            response.write('dir: ' + dir );
+            response.write('yourcheck: ' + theirCheck );
+            response.end();
+        });
+    } else if( path == '/run2' ) {
+        getQueryDic( request, function( queryDic ) {
+            response.writeHead(200, {'Content-type': 'text/html; charset=utf-8' });
+            response.write('hey. you called run2. Response from cmd.js!');
+            var cmd = queryDic.cmd;
+            var dir = queryDic.dir;
+            var theirCheck = queryDic.check;
+            response.write('cmd: ' + cmd );
+            response.write('dir: ' + dir );
+            response.write('yourcheck: ' + theirCheck );
+//            response.end();
+            var splitcmd = cmd.split(' ' );
+            var cmd1 = splitcmd[0];
+            response.write('cmd1: ' + cmd + '<br />\n' );
+            options = {cwd: dir }
+            if( splitcmd.length > 1 ) {
+                var args = splitcmd.slice(1);
+                response.write('has args: ' + args + '<br />');
+                var cmdobj = spawn( cmd1, args, options );
+            } else {
+                response.write('no args<br/>');
+                var cmdobj = spawn( cmd1, options );
+            }
+            response.write('cmd1: ' + cmd1 );
+            cmdobj.on('exit', function(code) {
+                response.write('done, code: ' + code );
+                response.end();
+//                job.finished = true;
+            });
+            cmdobj.on('error', function(code) {
+                response.write('error, code: ' + code );
+                response.end();
+  //              job.finished = true;
+            });
+            cmdobj.stdout.on('data', function(data) {
+                var thisresult = String(data).split('\n').join('<br/>\n' ).replace(/ /g, '&nbsp;' );
+    //            job.results += thisresult;
+                response.write( thisresult );
+            });
+            cmdobj.stderr.on('data', function(data) {
+                response.write( 'stderr: ' + String(data).split('\n').join('<br/>\n' ).replace(/ /g, '&nbsp;' ) );
+            });
+            cmdobj.on('close', function (code) {
+                response.write('child process exited with code ' + code);
+                response.end();
+      //          job.finished = true;
+            });
+        });
     } else if( path == '/md5.min.js' ) {
         serveStaticJs( md5jspath + '/md5.min.js', response);
+    } else if( path == '/index.html' ) {
+        serveStaticHtml( __dirname + '/index.html', response);
+    } else if( path == '/jquery-1.11.2.min.js' ) {
+        serveStaticJs( __dirname + '/jquery-1.11.2.min.js', response);
     } else {
         response.write('page ' + path + ' not known');
         response.end();

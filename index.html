@@ -1,0 +1,63 @@
+<html>
+<head>
+<meta http-equiv="cache-control" content="no-cache" />
+<meta charset="utf-8" />
+<script src="jquery-1.11.2.min.js"></script>
+<script src="md5.min.js"></script>
+<style>
+</style>
+<script>
+$( function() {
+    var oldLength = 0;
+    window.setInterval( function() {
+        var newText = $('#myiframe').contents().text();
+        if( newText.length == oldLength ) {
+            return;
+        }
+        $('#outputdiv').text(newText.replace(/\n/g, '<br />\n'));
+        oldLength = newText.length;
+        //console.log($('#myiframe').contents().text() );
+    }, 1000 );
+    $('#go').click( function( event ) {
+        //alert('hey!');
+        var passwordValue = $('#password').val();
+        var dirValue = $('#dir').val();
+        var cmdValue = $('#cmd').val();
+        var stringToCheck = passwordValue + '||' + dirValue + '||' + cmdValue;
+        console.log(stringToCheck);
+        var checksum = md5( stringToCheck );
+        console.log(checksum);
+        var urlpath = '/run2?dir=' + dirValue + '&cmd=' + cmdValue + '&check=' + checksum;
+        console.log( urlpath );
+        //$('#myiframe').attr('src','/run2?cmd=ls');
+        $('#myiframe').attr('src',urlpath);
+        //$.post('/run2', { 'dir': dirValue, 'cmd': cmdValue, 'check': checksum }, function( response ) {
+        //    console.log( response );
+        //});
+        //$.ajax( {
+        //    url: "/run2",
+        //    data: { 'dir': dirValue, 'cmd': cmdValue, 'check': checksum },
+        //    dataFilter: function( data, type ) {
+        //        console.log('datafilter called');
+        //        console.log('data: ' + data );
+        //    },
+        //    success: function(response) {
+        //        console.log(response);
+        //    }
+        //});
+    });
+});
+</script>
+</head>
+<body>
+<div id="jobs"></div>
+Password: <input type="password" id="password" /><br />
+Directory: <input type="text" width="40" name="dir" id="dir" value="." /><br />
+Cmd: <input type="text" width="100" name="cmd" id="cmd" value="" /><br />
+<input type="button" id="go" value="run" /><br />
+<br />
+<div id="outputdiv"></div>
+<iframe height="450" width="1024" id="myiframe" src="/run"></iframe>
+</body>
+</html>
+
