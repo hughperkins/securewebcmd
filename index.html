@@ -7,17 +7,59 @@
 <style>
 </style>
 <script>
+function tail( id ) {
+    $('#myiframe').attr('src','/job?jobId=' + id);
+}
+function kill( id ) {
+    $.post('/kill', {'id': id }, function( response ) {
+        console.log( response );
+        console.log( response.result );
+    });
+}
+function refreshJobs() {
+    $('#jobs').html('');
+    $.get( '/jobs', {}, function( response ) {
+        //console.log( response );
+        var jobs = JSON.parse( response );
+        console.log( jobs.length );
+        for( var i = 0; i < jobs.length; i++ ) {
+            var job = jobs[i];
+            addJobToHtml( job );
+        }
+        //$('input.tail').click( function( event ) {
+        //    console.log( this );
+        //});
+    });
+}
+function addJobToHtml( job ) {
+    console.log( job );
+    var argsstring = '';
+    if( typeof job.args != 'undefined' ) {
+        argsstring = '' + job.args;
+    }
+    var jobhtml = job.id + ' ' + job.cmd + ' ' + argsstring;
+    //jobhtml += ' ' + job.done;
+    jobhtml += '&nbsp;&nbsp;&nbsp;<input type="button" class="tail" value="results" onclick="tail(' + job.id + ');" />';
+    if( !job.done ) { 
+        jobhtml += '<input type="button" class="kill" value="kill" onclick="kill(' + job.id + ');" />';
+    }
+    $('#jobs').append( jobhtml + '<br />' );
+}
 $( function() {
     var oldLength = 0;
+    var oldText = '';
     window.setInterval( function() {
         var newText = $('#myiframe').contents().text();
-        if( newText.length == oldLength ) {
+        //if( newText.length == oldLength ) {
+        if( newText == oldText ) {
             return;
         }
-        $('#outputdiv').text(newText.replace(/\n/g, '<br />\n'));
+        $('#outputdiv').html(newText.replace(/ /g, '&nbsp;').replace(/\n/g, '<br />\n'));
         oldLength = newText.length;
+        oldText = newText;
         //console.log($('#myiframe').contents().text() );
-    }, 1000 );
+        refreshJobs();
+    }, 3000 );
     $('#go').click( function( event ) {
         //alert('hey!');
         var passwordValue = $('#password').val();
@@ -29,11 +71,25 @@ $( function() {
         console.log(checksum);
         var urlpath = '/run2?dir=' + dirValue + '&cmd=' + cmdValue + '&check=' + checksum;
         console.log( urlpath );
+
+        //$.post('/
+
         //$('#myiframe').attr('src','/run2?cmd=ls');
-        $('#myiframe').attr('src',urlpath);
-        //$.post('/run2', { 'dir': dirValue, 'cmd': cmdValue, 'check': checksum }, function( response ) {
-        //    console.log( response );
-        //});
+        //$('#myiframe').attr('src',urlpath);
+        $.post('/run2', { 'dir': dirValue, 'cmd': cmdValue, 'check': checksum }, function( response ) {
+            //console.log( 'response: ' + response );
+            var job = response;
+            console.log(job);
+            console.log(job.result );
+            if( job.result == 'success' ) {
+                console.log( response );
+                console.log( response.id );
+                addJobToHtml( job );
+                tail( response.id );
+            } else {
+                alert(job.error);
+            }
+        }, 'json' );
         //$.ajax( {
         //    url: "/run2",
         //    data: { 'dir': dirValue, 'cmd': cmdValue, 'check': checksum },
@@ -46,10 +102,12 @@ $( function() {
         //    }
         //});
     });
+    refreshJobs();
 });
 </script>
 </head>
 <body>
+<input type="button" onclick="refreshJobs();" value="refresh jobs" /><br />
 <div id="jobs"></div>
 Password: <input type="password" id="password" /><br />
 Directory: <input type="text" width="40" name="dir" id="dir" value="." /><br />
@@ -57,7 +115,7 @@ Cmd: <input type="text" width="100" name="cmd" id="cmd" value="" /><br />
 <input type="button" id="go" value="run" /><br />
 <br />
 <div id="outputdiv"></div>
-<iframe height="450" width="1024" id="myiframe" src="/run"></iframe>
+<iframe height="450" width="1024" id="myiframe" style='display: none'></iframe>
 </body>
 </html>
 

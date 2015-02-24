@@ -237,51 +237,131 @@ function serverFunction( request, response ) {
         });
     } else if( path == '/run2' ) {
         getQueryDic( request, function( queryDic ) {
-            response.writeHead(200, {'Content-type': 'text/html; charset=utf-8' });
-            response.write('hey. you called run2. Response from cmd.js!');
+            response.writeHead(200, {'Content-type': 'application/json' });
             var cmd = queryDic.cmd;
             var dir = queryDic.dir;
             var theirCheck = queryDic.check;
-            response.write('cmd: ' + cmd );
-            response.write('dir: ' + dir );
-            response.write('yourcheck: ' + theirCheck );
+            console.log('cmd: ' + cmd );
+            console.log('dir: ' + dir );
+            var ourCheck = md5.md5( password + '||' + dir + '||' + cmd );
+            console.log('their check: ' + theirCheck );
+            console.log('our check: ' + ourCheck );
+            if( theirCheck != ourCheck ) {
+                response.end(JSON.stringify({'result': 'fail', 'error': 'checksum error' } ) );
+                return;
+            }
 //            response.end();
             var splitcmd = cmd.split(' ' );
             var cmd1 = splitcmd[0];
-            response.write('cmd1: ' + cmd + '<br />\n' );
+            console.log('cmd1: ' + cmd + '<br />\n' );
             options = {cwd: dir }
             if( splitcmd.length > 1 ) {
                 var args = splitcmd.slice(1);
-                response.write('has args: ' + args + '<br />');
+                console.log('has args: ' + args + '<br />');
                 var cmdobj = spawn( cmd1, args, options );
             } else {
-                response.write('no args<br/>');
+                console.log('no args<br/>');
                 var cmdobj = spawn( cmd1, options );
             }
-            response.write('cmd1: ' + cmd1 );
+            console.log('cmd1: ' + cmd1 );
+            job = { 'cmd': cmd1, 'args': args, 'cmdobj': cmdobj, 'done': false, 'results': '' };
+            jobs[ jobs.length ] = job;
+            job.id = jobs.length - 1;
+            console.log('job: ' + job );
             cmdobj.on('exit', function(code) {
-                response.write('done, code: ' + code );
-                response.end();
+                job.results += 'done, code: ' + code + '\n';
+                job.done = true;
+                //response.write('done, code: ' + code );
+               // response.end();
 //                job.finished = true;
             });
             cmdobj.on('error', function(code) {
-                response.write('error, code: ' + code );
-                response.end();
+                job.results += 'error, code: ' + code + '\n';
+                job.done = true;
+//                response.write('error, code: ' + code );
+//                response.end();
   //              job.finished = true;
             });
             cmdobj.stdout.on('data', function(data) {
-                var thisresult = String(data).split('\n').join('<br/>\n' ).replace(/ /g, '&nbsp;' );
+//                var thisresult = String(data).split('\n').join('<br/>\n' ).replace(/ /g, '&nbsp;' );
     //            job.results += thisresult;
-                response.write( thisresult );
+//                response.write( thisresult );
+                job.results += String(data);
+//                job.done = true;
             });
             cmdobj.stderr.on('data', function(data) {
-                response.write( 'stderr: ' + String(data).split('\n').join('<br/>\n' ).replace(/ /g, '&nbsp;' ) );
+                job.results += String(data);
+//                response.write( 'stderr: ' + String(data).split('\n').join('<br/>\n' ).replace(/ /g, '&nbsp;' ) );
             });
             cmdobj.on('close', function (code) {
-                response.write('child process exited with code ' + code);
-                response.end();
+                job.results += 'child process exited with code: ' + code + '\n';
+                job.done = true;
+//                response.write('child process exited with code ' + code);
+//                response.end();
       //          job.finished = true;
             });
+            response.end(JSON.stringify({ 'id': job.id , 'result': 'success', 'cmd': job.cmd, 'args': job.args, 'done': job.done }) );
+        });
+    } else if( path == '/job' ) {
+        getQueryDic( request, function( queryDic ) {
+            response.writeHead(200, {'Content-type': 'text/plain; charset=utf-8' });
+            var jobId = queryDic.jobId;
+            console.log('requested jobid: ' + jobId );
+            var job = jobs[jobId];
+            console.log('job: ' + job );
+            if( typeof job == 'undefined' ) {
+                response.write('job unknown');
+                response.end();
+                return;
+            }
+            if( job.done ) {
+                response.write( job.results);
+                response.end();
+            } else {
+                response.write( job.results );
+                var cmdobj = job.cmdobj;
+                cmdobj.on('exit', function(code) {
+                    response.write('done, code: ' + code );
+                    response.end();
+                });
+                cmdobj.on('error', function(code) {
+                    response.write('error, code: ' + code );
+                    response.end();
+                });
+                cmdobj.stdout.on('data', function(data) {
+                   response.write( String(data) );
+                });
+                cmdobj.stderr.on('data', function(data) {
+                    response.write( 'stderr: ' + String(data) );
+                });
+                cmdobj.on('close', function (code) {
+                    response.write('child process exited with code ' + code);
+                    response.end();
+                });
+            }
+        });
+    } else if( path == '/jobs' ) {
+        response.writeHead('application/json');
+        var jobssimple = [];
+        var jobIds = Object.keys( jobs );
+        for( var i = 0; i < jobIds.length; i++ ) {
+            var job = jobs[i];
+            var jobSimple = { 'id': job.id, 'cmd': job.cmd, 'args': job.args, 'done': job.done };
+            jobssimple[i] = jobSimple;
+        }
+        response.end( JSON.stringify( jobssimple ) );
+        //response.end( JSON.stringify( jobs ) );
+    } else if( path == '/kill' ) {
+        getQueryDic( request, function( queryDic ) {
+            var id = queryDic.id;
+            console.log('killing id: ' + id );
+            var job = jobs[id];
+            console.log('job: ' + job );
+            job.cmdobj.kill();
+            response.writeHead('application/json');
+            var result = {'result': 'success'};
+            response.end( JSON.stringify( result ) );
+            //response.end( JSON.stringify( jobs ) );
         });
     } else if( path == '/md5.min.js' ) {
         serveStaticJs( md5jspath + '/md5.min.js', response);
