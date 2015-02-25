@@ -30,6 +30,11 @@ npm start securewebcmd
 * you can kill the job by clicking 'kill' button next to the running job, at the top of the screen
 * you can view the results for any job, current or past, by clicking the 'results' button, next to the job line, at the top of the window
 
+# What if I run a task while another is already running?
+
+* it will be queued
+* it will start once the running task finishes, or you click 'kill' to kill the running task
+
 # How is it secured, since it's using http?
 
 * in http mode, the password isn't sent to the server, it's used to generate an md5 hash of the command and its arguments

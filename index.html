@@ -55,13 +55,15 @@ function jobToHtml( job ) {
     if( argsstring != '' ) {
         fullcmd += ' ' + argsstring;
     }
-    var jobhtml = job.id + ' ' + job.cmd + ' ' + argsstring;
+    var jobhtml = job.id + ' ' + job.cmd + ' ' + argsstring + ' ' + job.state;
     //jobhtml += ' ' + job.done;
-    if( !job.done ) { 
+    if( job.state == 'running' ) { 
         jobhtml += '&nbsp;&nbsp;&nbsp;<input type="button" class="tail" value="tail" onclick="tail(' + job.id + ');" />';
         jobhtml += '<input type="button" class="kill" value="kill" onclick="kill(' + job.id + ');" />';
-    } else {
+    } else if ( job.state == 'done' ) {
         jobhtml += '&nbsp;&nbsp;&nbsp;<input type="button" class="tail" value="results" onclick="tail(' + job.id + ');" />';
+    } else { // queued
+        jobhtml += '&nbsp;&nbsp;&nbsp;<input type="button" class="tail" value="tail" onclick="tail(' + job.id + ');" />';
     }
     jobhtml += '<input type="button" class="copyargs" value="copy values" onclick="copyArgs(\'' + job.dir + '\',\'' + fullcmd + '\');" />';
     //console.log( jobhtml );
