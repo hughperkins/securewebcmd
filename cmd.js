@@ -283,7 +283,16 @@ function startServer() {
         } ).listen(8888);
         console.log('key.pem and cert.pem detected: started using https protocol, use https:// to connect, port 8888');
     } else {
-        console.log("sorry, running as http isn't supported any more.  Please create a key.pem and cert.pem file, so we can use https");
+        //console.log("sorry, running as http isn't supported any more.  Please create a key.pem and cert.pem file, so we can use https");
+        http.createServer( function(request, response) {
+            try {
+                serverFunction(request,response);
+            }catch( e ) {
+                console.log('something went wrong:' + e );
+                response.end('something went wrong ' + e);
+            }
+        } ).listen(8888);
+        console.log('key.pem and cert.pem not detected: started using http protocol, use http:// to connect, port 8888');
     }
 }
 
