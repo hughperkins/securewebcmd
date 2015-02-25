@@ -267,7 +267,7 @@ function serverFunction( request, response ) {
         });
     } else if( path == '/job' ) {
         getQueryDic( request, function( queryDic ) {
-            response.writeHead(200, {'Content-type': 'text/plain; charset=utf-8' });
+            response.writeHead(200, {'Content-type': 'text/plain; charset=utf-8', 'x-frame-options': 'SAMEORIGIN' });
             if( !checkPass( queryDic.saltedpass ) ) {
                 response.end( JSON.stringify( { 'result': 'fail', 'error': 'invalid pass' } ) );
                 return;
