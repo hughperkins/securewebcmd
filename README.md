@@ -1,6 +1,20 @@
 # securewebcmd
 Execute commands on a linux server through a webpage. Secured using md5 hashing.
 
+Security:
+* works with http or https
+* password protected
+* password not transmitted
+* you can use https, which provides protection against replay attacks, and encrypts traffic, in both directions
+
+Functions:
+* see history of commands run previously
+* view results of any command, currently running, or historic
+* results are persistent, even after server restart
+* uses nodejs, simple to install and run
+  * doesn't need apache etc ...
+* can kill jobs after starting them
+
 # How to use
 
 ```bash
@@ -10,10 +24,11 @@ npm start securewebcmd
 ... then type in the password twice
 
 * Connect to the server from a webbrowser, at port 8888, ie [localhost://http:8888](http://localhost:8888)
-* Type in a command, fill in the password, and press 'enter'
-* the command should run, on the server, and the results be returned
-* you can change the directory in the 'dir' textbox
-* you can kill the command, by opening a second browser window, and sending an appropriate `killall` command.
+* Type in the password, same as the one you entered at the server
+* Type in a command, a directoryt to run in, and click 'run'
+* the command should run, on the server, and the results appear in real-time
+* you can kill the job by clicking 'kill' button next to the running job, at the top of the screen
+* you can view the results for any job, current or past, by clicking the 'results' button, next to the job line, at the top of the window
 
 # How is it secured, since it's using http?
 
@@ -26,9 +41,11 @@ npm start securewebcmd
 
 No. Not encrypted, simply, one needs to know the password, if one wants the request sent to the server to be executed on the server.  The request and the results themselves are sent in clear.
 
+If you use https, then the traffic is encrypted :-)
+
 # Is it secure from a man-in-middle attack?
 
-No.  If someone can change the traffic en-route, they can change the javascript sent to the browser.
+No.  If someone can change the traffic en-route, they can change the javascript sent to the browser.  (If you use https, you're more secure on this front, as long as you have some way of validating that the certificate you are receiving on the browser is the one the server is using).
 
 # Can I use https?
 
@@ -49,5 +66,5 @@ Hmmm, yeah, kind of, if you have no way of checking the self-signed certificate 
 
 # So why don't I just not use https, and stick with the md5 hash?
 
-Well, in http, everything you transmit is transmitted in clear, in https, it's not readable, using just a passive attack.
+Well, in http, everything you transmit is transmitted in clear, and so you're susceptible to replay attacks and so on.  In https, it's not readable, providing protection against passive attacks.
 
