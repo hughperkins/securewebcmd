@@ -49,6 +49,5 @@ Hmmm, yeah, kind of, if you have no way of checking the self-signed certificate 
 
 # So why don't I just not use https, and stick with the md5 hash?
 
-In https mode, the entered password will be transmitted over the ssl connection, in both directions, and re-populate the password field in the form, so you won't need to keep re-entering the password each time.  This is more or less secure, since the connection is using ssl, and easier to use.
-
+Well, in http, everything you transmit is transmitted in clear, in https, it's not readable, using just a passive attack.
 

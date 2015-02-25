@@ -7,20 +7,34 @@
 <style>
 </style>
 <script>
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min)) + min;
+}
 function tail( id ) {
-    $('#myiframe').attr('src','/job?jobId=' + id);
+    $('#myiframe').attr('src','/job?jobId=' + id + '&saltedpass=' + getSaltedPassword());
 }
 function kill( id ) {
-    $.post('/kill', {'id': id }, function( response ) {
+    $.post('/kill', {'id': id, 'saltedpass': getSaltedPassword() }, function( response ) {
         console.log( response );
         console.log( response.result );
     });
 }
+function copyArgs( dir, cmd ) {
+    console.log( 'copyargs ' + dir + ' ' + cmd );
+    $('#dir').val(dir);
+    $('#cmd').val(cmd); 
+}
+function getSaltedPassword() {
+    var password = $('#password').val();
+    var salt = getRandomInt(0,100000000);
+    var saltedPass = salt + '|' + md5( salt + '|' + password );
+    //console.log( saltedPass );
+    return saltedPass;
+}
 function refreshJobs() {
-    $.get( '/jobs', {}, function( response ) {
-        //console.log( response );
-        var jobs = JSON.parse( response );
-        console.log( jobs.length );
+    $.get( '/jobs', {'saltedpass': getSaltedPassword()}, function( response ) {
+        var jobs = response;
+        //console.log( jobs.length );
         var newHtml = '';
         for( var i = 0; i < jobs.length; i++ ) {
             var job = jobs[i];
@@ -30,10 +44,16 @@ function refreshJobs() {
     });
 }
 function jobToHtml( job ) {
-    console.log( job );
+    //console.log( job );
+    //console.log( 'job dir: ' + job.dir );
+    //console.log( 'job cmd: ' + job.cmd );
     var argsstring = '';
     if( typeof job.args != 'undefined' ) {
-        argsstring = '' + job.args;
+        argsstring = '' + job.args.join(' ');
+    }
+    var fullcmd = job.cmd;
+    if( argsstring != '' ) {
+        fullcmd += ' ' + argsstring;
     }
     var jobhtml = job.id + ' ' + job.cmd + ' ' + argsstring;
     //jobhtml += ' ' + job.done;
@@ -43,67 +63,57 @@ function jobToHtml( job ) {
     } else {
         jobhtml += '&nbsp;&nbsp;&nbsp;<input type="button" class="tail" value="results" onclick="tail(' + job.id + ');" />';
     }
+    jobhtml += '<input type="button" class="copyargs" value="copy values" onclick="copyArgs(\'' + job.dir + '\',\'' + fullcmd + '\');" />';
+    //console.log( jobhtml );
     return jobhtml;
+}
+var oldLength = 0;
+var oldText = '';
+function refreshOutput() {
+    var newText = $('#myiframe').contents().text();
+    if( newText == oldText ) {
+        return;
+    }
+    $('#outputdiv').html(newText.replace(/ /g, '&nbsp;').replace(/\n/g, '<br />\n'));
+    oldLength = newText.length;
+    oldText = newText;
+    refreshJobs();
 }
 function addJobToHtml( job ) {
     $('#jobs').append( jobToHtml(job) + '<br />' );
 }
 $( function() {
-    var oldLength = 0;
-    var oldText = '';
     window.setInterval( function() {
-        var newText = $('#myiframe').contents().text();
-        //if( newText.length == oldLength ) {
-        if( newText == oldText ) {
-            return;
-        }
-        $('#outputdiv').html(newText.replace(/ /g, '&nbsp;').replace(/\n/g, '<br />\n'));
-        oldLength = newText.length;
-        oldText = newText;
-        //console.log($('#myiframe').contents().text() );
-        refreshJobs();
+        refreshOutput();
     }, 3000 );
     $('#go').click( function( event ) {
-        //alert('hey!');
         var passwordValue = $('#password').val();
         var dirValue = $('#dir').val();
         var cmdValue = $('#cmd').val();
         var stringToCheck = passwordValue + '||' + dirValue + '||' + cmdValue;
-        console.log(stringToCheck);
+        //console.log(stringToCheck);
         var checksum = md5( stringToCheck );
-        console.log(checksum);
+        //console.log(checksum);
         var urlpath = '/run2?dir=' + dirValue + '&cmd=' + cmdValue + '&check=' + checksum;
-        console.log( urlpath );
+        //console.log( urlpath );
 
-        //$.post('/
-
-        //$('#myiframe').attr('src','/run2?cmd=ls');
-        //$('#myiframe').attr('src',urlpath);
         $.post('/run2', { 'dir': dirValue, 'cmd': cmdValue, 'check': checksum }, function( response ) {
-            //console.log( 'response: ' + response );
             var job = response;
-            console.log(job);
-            console.log(job.result );
+            //console.log(job);
+            //console.log(job.result );
             if( job.result == 'success' ) {
-                console.log( response );
-                console.log( response.id );
+                //console.log( response );
+                //console.log( response.id );
                 addJobToHtml( job );
                 tail( response.id );
             } else {
                 alert(job.error);
             }
         }, 'json' );
-        //$.ajax( {
-        //    url: "/run2",
-        //    data: { 'dir': dirValue, 'cmd': cmdValue, 'check': checksum },
-        //    dataFilter: function( data, type ) {
-        //        console.log('datafilter called');
-        //        console.log('data: ' + data );
-        //    },
-        //    success: function(response) {
-        //        console.log(response);
-        //    }
-        //});
+    });
+    $('#myiframe').load( function( event ) {
+        console.log('iframe load');
+        refreshOutput();
     });
     refreshJobs();
 });
