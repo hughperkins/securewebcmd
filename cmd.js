@@ -15,6 +15,8 @@ var prompt = require( 'prompt');
 var querystring = require('querystring');
 
 var md5jspath = path.dirname( require.resolve('blueimp-md5') );
+var jquerypath = path.dirname( require.resolve('jquery') );
+console.log( 'jquerypath: ' + jquerypath );
 
 var nextJob = 0;
 var jobs = [];
@@ -256,8 +258,8 @@ function serverFunction( request, response ) {
         serveStaticJs( md5jspath + '/md5.min.js', response);
     } else if( path == '/index.html' ) {
         serveStaticHtml( __dirname + '/index.html', response);
-    } else if( path == '/jquery-1.11.2.min.js' ) {
-        serveStaticJs( __dirname + '/jquery-1.11.2.min.js', response);
+    } else if( path == '/jquery.min.js' ) {
+        serveStaticJs( jquerypath + '/jquery.min.js', response);
     } else {
         response.write('page ' + path + ' not known');
         response.end();
