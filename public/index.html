@@ -20,13 +20,6 @@
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
-function getSaltedPassword() {
-    var password = $('#password').val();
-    var salt = getRandomInt(0,100000000);
-    var saltedPass = salt + '|' + md5( salt + '|' + password );
-    //console.log( saltedPass );
-    return saltedPass;
-}
 function hashPassword(password) {
     if( typeof password == 'undefined' ) {
         password = '';
@@ -47,8 +40,6 @@ function getJobIndex( jobs, jobId ) {
 
 var oldLength = 0;
 var oldText = '';
-$( function() {
-});
 
 var app = angular.module('mainapp', [] );
 app.controller( 'maincontroller', function( $scope, $http ) {
@@ -95,7 +86,6 @@ app.controller( 'maincontroller', function( $scope, $http ) {
         $('#myiframe').attr('src','/job?jobId=' + job.id + '&checkpass=' + hashPassword($scope.password) + '&nocompress=1' );
         $('#resultsmodal').modal('show');
         $scope.modalresultstitle = job.cmd + ' ' + job.joinedargs
-       // $scope.iframesrc = '/job?jobId=' + job.id + '&checkpass=' + hashPassword($scope.password);
     }
     $scope.copyArgs = function( job ) {
         console.log( 'copyargs ', job );
@@ -214,10 +204,11 @@ app.controller( 'maincontroller', function( $scope, $http ) {
   </div>
 </div>
 
+<iframe height="450" width="1024" id="myiframe" style='display: none'>
+</iframe>
+
 </div>
 
-    <iframe height="450" width="1024" id="myiframe" style='display: none'>
-</iframe>
 </body>
 </html>
 
