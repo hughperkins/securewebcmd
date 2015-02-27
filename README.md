@@ -82,3 +82,13 @@ Hmmm, yeah, kind of, if you have no way of checking the self-signed certificate 
 
 Well, in http, everything you transmit is transmitted in clear, and so you're susceptible to replay attacks and so on.  In https, it's not readable, providing protection against passive attacks.
 
+# What libraries does it use?
+
+* nodejs (more a platform than a library I suppose?)
+* express
+* angular
+* bit of jquery
+* twitter bootstrap
+
+Angular is really awesome :-)  It's like Jinja2 for the front-end, works really well with ajax :-)
+
