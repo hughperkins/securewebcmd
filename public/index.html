@@ -2,9 +2,11 @@
 <head>
 <meta http-equiv="cache-control" content="no-cache" />
 <meta charset="utf-8" />
+<link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
 <script src="jquery/jquery.min.js"></script>
 <script src="md5/md5.min.js"></script>
-<!--<script src="angular/angular.min.js"></script>-->
+<script src="bootstrap/js/bootstrap.min.js"></script>
+<script src="angular/angular.min.js"></script>
 <style>
 </style>
 <script>
@@ -123,14 +125,41 @@ $( function() {
 </script>
 </head>
 <body>
-<input type="button" onclick="refreshJobs();" value="refresh jobs" /><br />
-<div id="jobs"></div>
-Password: <input type="password" id="password" /><br />
-Directory: <input type="text" size="40" name="dir" id="dir" value="." /><br />
-Cmd: <input type="text" size="100" name="cmd" id="cmd" value="" /><br />
-<input type="button" id="go" value="run" /><br />
+<div class="container">
+<h1>Launch</h1>
+<br />
+<br />
+<form class="form-horizontal">
+    <div class="form-group">
+        <label for="password" class="control-label col-xs-2">Password</label> 
+        <div class="col-xs-10">
+         <input type="password" class="form-control" placeholder="password" id="password" />
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-2">Directory</label>
+        <div class="col-xs-10">
+            <input type="text" class="form-control col-xs-10" name="dir" placeholder="working directory" id="dir" placeholder="working directory" />
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-2">Cmd</label>
+        <div class=" col-xs-10">
+            <input type="text" size="100" class="form-control" name="cmd" placeholder="command to run" id="cmd" value="" />
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-xs-2 col-xs-offset-2">
+            <button class="btn btn-primary" id="go">Launch <span class="glyphicon glyphicon-play" /></button>
+        </div>
+    </div>
+</form>
 <br />
 <div id="outputdiv"></div>
+<h1>History</h1>
+<button class="btn btn-default" onclick="refreshJobs();">Refresh <span class="glyphicon glyphicon-refresh" ></span></button><br />
+<div id="jobs"></div>
+</div>
 <iframe height="450" width="1024" id="myiframe" style='display: none'></iframe>
 </body>
 </html>

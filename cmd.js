@@ -293,15 +293,15 @@ app.use( function( request, response, next ) { // then we can always use req.que
 router.use('/run2', run2 );
 router.use( function( request, response, next ) {
     // add filter for password
-    console.log( request.path );
+//    console.log( request.path );
     var checkpass = request.query2.checkpass;
-    console.log('checkpass: ' + checkpass );
+//    console.log('checkpass: ' + checkpass );
     if( typeof checkpass == 'undefined' || !checkPass( checkpass ) ) {
         response.writeHead(200, {'Content-type': 'application/json; charset=utf-8' } );
         response.end(JSON.stringify( { 'result': 'fail', 'error': 'checksum mismatch, check password' }, 0, 4 ) );
         return;
     }
-    console.log('pass ok :-)' );
+//    console.log('pass ok :-)' );
     next();
 });
 router.use('/job', getJob );
