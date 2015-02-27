@@ -6,16 +6,21 @@
 
 var http = require('http');
 var https = require('https');
-var url = require('url');
 var spawn = require('child_process').spawn;
 var fs = require('fs');
 var path = require('path');
+var bodyParser = require('body-parser');
 var md5 = require( 'blueimp-md5');
 var prompt = require( 'prompt');
-var querystring = require('querystring');
+var express = require('express');
+var compression = require('compression');
+var util = require('util');
+require('string.prototype.endswith');
 
-var md5jspath = path.dirname( require.resolve('blueimp-md5') );
+var md5path = path.dirname( require.resolve('blueimp-md5') );
 var jquerypath = path.dirname( require.resolve('jquery') );
+var angularpath = path.dirname( require.resolve('angular' ) );
+var bootstrappath = path.dirname( path.dirname( require.resolve( 'bootstrap' ) ) );
 
 //var nextJob = 0;
 var jobs = [];
@@ -48,21 +53,8 @@ if( fs.existsSync( __dirname + '/jobs.json' ) ) {
     jobs = JSON.parse(fs.readFileSync(__dirname + '/jobs.json', 'utf8'));
 }
 
-function serveStatic( filepath, type, response ) {
-    var filepath = filepath;
-//    console.log( 'filepath: [' + filepath + ']');
-    var stat = fs.statSync( filepath );
-    response.writeHead(200, { 'Content-Type': type, 'Content-Length': stat.size });
-    var readStream = fs.createReadStream( filepath );
-    readStream.on('open', function() {
-        readStream.pipe( response );
-    });
-    readStream.on('error', function(err) {
-        response.end(err);
-    });
-}
-
 function checkPass( checkpass ) {
+    console.log('checkpass( ' + checkpass + ' )');
     var splitcheckpass = checkpass.split('|');
     var salt = splitcheckpass[0];
     var checksum = splitcheckpass[1];
@@ -70,6 +62,13 @@ function checkPass( checkpass ) {
     console.log( 'ourchecksum: ' + ourchecksum );
     console.log( 'theirchecksum: ' + checkpass );
     return ourchecksum == checksum;
+}
+
+function requestToDic( request ) {
+    var result = {};
+    util._extend( result, request.body );
+    util._extend( result, request.query );
+    return result;
 }
 
 function listToFilteredList( list, properties ) {
@@ -86,38 +85,6 @@ function listToFilteredList( list, properties ) {
         filteredList[i] = newItem;
     }
     return filteredList;    
-}
-
-function serveStaticJs( filepath, response ) {
-    serveStatic( filepath, 'text/javascript', response );
-}
-
-function serveStaticHtml( filepath, response ) {
-    serveStatic( filepath, 'text/html', response );
-}
-
-function getQueryDic( request, callback ) {
-    if( request.method == 'POST' ) {
-        var queryData = '';
-        var queryDic = '';
-        request.on('data', function(data ) {
-            queryData += data;
-//            if( queryData.length > 1e6 ) {
-//                queryData = '';
-////                response.writeHead(413, {'Content-Type': 'text/plain'}).end();
-//                request.connection.destroy();
-//            }
-        });
-        request.on('end', function() {
-            queryDic = querystring.parse(queryData);
-            request.queryDic = queryDic;
-            callback( queryDic );
-        });
-    } else {
-        var queryDic = url.parse( request.url, true ).query;
-        request.queryDic = queryDic;
-        callback( queryDic );
-    }
 }
 
 function setListAttr( list, prop, value ) {
@@ -188,20 +155,6 @@ function startJob( job ) {
     }
     job.cmdobj = cmdobj;
 
-//    cmdobj.on('exit', function(code) {
-//        console.log('exit');
-//        job.results += 'done, code: ' + code + '\n';
-//        runEvent( job.onexit, code );
-//        //jobFinished( job );
-//        writeJobs();
-//    });
-//    cmdobj.on('error', function(code) {
-//        console.log('error');
-//        job.results += 'error, code: ' + code + '\n';
-//        runEvent( job.onerror, code );
-//        //jobFinished( job );
-//        writeJobs();
-//    });
     cmdobj.stdout.on('data', function(data) {
         runEvent( job.ondata, data );
         job.results += String(data);
@@ -220,142 +173,141 @@ function startJob( job ) {
     });
 }
 
-function serverFunction( request, response ) {
-    var path = url.parse( request.url ).pathname;
-    console.log('received request: ' + request.url );
-    if( path == '/run2' ) {
-        getQueryDic( request, function( queryDic ) {
-            response.writeHead(200, {'Content-type': 'application/json' });
-            var cmd = queryDic.cmd;
-            var dir = queryDic.dir;
-            var theirCheck = queryDic.check;
-            console.log('cmd: ' + cmd );
-            console.log('dir: ' + dir );
-            var ourCheck = md5.md5( password + '||' + dir + '||' + cmd );
-            console.log('their check: ' + theirCheck );
-            console.log('our check: ' + ourCheck );
-            if( theirCheck != ourCheck ) {
-                response.end(JSON.stringify({'result': 'fail', 'error': 'checksum error' } ) );
-                return;
-            }
+function run2( request, response ) {
+    console.log('request for /run2');
+    response.writeHead(200, {'Content-type': 'application/json; charset=utf-8;' });
+    var cmd = request.query2.cmd;
+    var dir = request.query2.dir;
+    var theirCheck = request.query2.check;
+    console.log('cmd: ' + cmd );
+    console.log('dir: ' + dir );
+    var ourCheck = md5.md5( password + '||' + dir + '||' + cmd );
+    console.log('their check: ' + theirCheck );
+    console.log('our check: ' + ourCheck );
+    if( theirCheck != ourCheck ) {
+        response.end(JSON.stringify({'result': 'fail', 'error': 'checksum error' } ) );
+        return;
+    }
 //            response.end();
-            var splitcmd = cmd.split(' ' );
-            var cmd1 = splitcmd[0];
-            var args = [];
-            if( splitcmd.length > 1 ) {
-                args = splitcmd.slice(1);
-            }
-            console.log('cmd1: ' + cmd + '<br />\n' );
-            console.log('cmd1: ' + cmd1 );
-            job = { 'cmd': cmd1, 'args': args, 'state': 'waiting', 'done': false, 'results': '', 'dir': dir };
-            job.ondata = [];
-            job.onclose = [];
+    var splitcmd = cmd.split(' ' );
+    var cmd1 = splitcmd[0];
+    var args = [];
+    if( splitcmd.length > 1 ) {
+        args = splitcmd.slice(1);
+    }
+    console.log('cmd1: ' + cmd + '<br />\n' );
+    console.log('cmd1: ' + cmd1 );
+    job = { 'cmd': cmd1, 'args': args, 'state': 'waiting', 'done': false, 'results': '', 'dir': dir };
+    job.ondata = [];
+    job.onclose = [];
 //            job.onexit = [];
-            job.dir = dir;
-            jobs[ jobs.length ] = job;
-            job.id = jobs.length - 1;
-            console.log('job: ' + job );
+    job.dir = dir;
+    jobs[ jobs.length ] = job;
+    job.id = jobs.length - 1;
+    console.log('job: ' + job );
 
-            if( currentJob == null ) {
-                startJob( job );
-            } else {
-                queuedJobs[ queuedJobs.length ] = job;
-                job.state = 'queued';
-            }
-
-            response.end(JSON.stringify({ 'id': job.id , 'result': 'success', 'cmd': job.cmd, 'args': job.args, 'done': job.done, 'state': job.state, 'dir': job.dir }) );
-        });
-    } else if( path == '/job' ) {
-        getQueryDic( request, function( queryDic ) {
-            response.writeHead(200, {'Content-type': 'text/plain; charset=utf-8', 'x-frame-options': 'SAMEORIGIN' });
-            if( !checkPass( queryDic.saltedpass ) ) {
-                response.end( JSON.stringify( { 'result': 'fail', 'error': 'invalid pass' } ) );
-                return;
-            }
-            var jobId = queryDic.jobId;
-            console.log('requested jobid: ' + jobId );
-            var job = jobs[jobId];
-            console.log('job: ' + job );
-            if( typeof job == 'undefined' ) {
-                response.write('job unknown');
-                response.end();
-                return;
-            }
-            if( job.done ) {
-                response.write( job.results);
-                response.end();
-            } else if( job.state == 'queued' ) {
-                response.write('waiting on queue...\n');
-                job.ondata.push( function( data ) {
-                    response.write( String(data) );
-                });
-                job.onclose.push( function( code ) {
-                    response.write('done, code: ' + code );
-                    response.end();
-                });
-//                job.onerror.push( function( code ) {
-//                    response.write('error, code: ' + code );
-//                    response.end();
-//                });
-            } else {
-                response.write( job.results );
-                var cmdobj = job.cmdobj;
-//                cmdobj.on('exit', function(code) {
-//                    response.write('done, code: ' + code );
-//                    response.end();
-//                });
-//                cmdobj.on('error', function(code) {
-//                    response.write('error, code: ' + code );
-//                    response.end();
-//                });
-                cmdobj.stdout.on('data', function(data) {
-                   response.write( String(data) );
-                });
-                cmdobj.stderr.on('data', function(data) {
-                    response.write( 'stderr: ' + String(data) );
-                });
-                cmdobj.on('close', function (code) {
-                    response.write('child process exited with code ' + code);
-                    response.end();
-                });
-            }
-        });
-    } else if( path == '/jobs' ) {
-        getQueryDic( request, function( queryDic ) {
-//            console.log( 'queryDic: ' + queryDic );
-            response.writeHead(200, {'Content-type': 'application/json; charset=utf-8' } );
-            if( !checkPass( queryDic.saltedpass ) ) {
-                response.end( JSON.stringify( { 'result': 'fail', 'error': 'invalid pass' } ) );
-                return;
-            }
-            response.end( JSON.stringify( listToFilteredList( jobs, ['done','cmd','id','state','args', 'dir'] ) ) );
-        });
-    } else if( path == '/kill' ) {
-        getQueryDic( request, function( queryDic ) {
-            response.writeHead(200, {'Content-type': 'application/json; charset=utf-8' } );
-            if( !checkPass( queryDic.saltedpass ) ) {
-                response.end( JSON.stringify( { 'result': 'fail', 'error': 'invalid pass' } ) );
-                return;
-            }
-            var id = queryDic.id;
-            console.log('killing id: ' + id );
-            var job = jobs[id];
-            console.log('job: ' + job );
-            job.cmdobj.kill();
-            var result = {'result': 'success'};
-            response.end( JSON.stringify( result ) );
-        });
-    } else if( path == '/md5.min.js' ) {
-        serveStaticJs( md5jspath + '/md5.min.js', response);
-    } else if( path == '/index.html' || path == '/' ) {
-        serveStaticHtml( __dirname + '/index.html', response);
-    } else if( path == '/jquery.min.js' ) {
-        serveStaticJs( jquerypath + '/jquery.min.js', response);
+    if( currentJob == null ) {
+        startJob( job );
     } else {
-        response.write('page ' + path + ' not known');
+        queuedJobs[ queuedJobs.length ] = job;
+        job.state = 'queued';
+    }
+
+    response.end(JSON.stringify({ 'id': job.id , 'result': 'success', 'cmd': job.cmd, 'args': job.args, 'done': job.done, 'state': job.state, 'dir': job.dir }) );
+}
+
+function getJob( request, response ) {
+    // sameorigin option means we can display it in iframe with no security issues
+    response.writeHead(200, {'Content-type': 'text/plain; charset=utf-8', 'x-frame-options': 'SAMEORIGIN' });
+    var jobId = request.query2.jobId;
+    console.log('requested jobid: ' + jobId );
+    var job = jobs[jobId];
+    console.log('job: ' + job );
+    if( typeof job == 'undefined' ) {
+        response.write('job unknown');
         response.end();
+        return;
+    }
+    if( job.done ) {  // just provide the results
+        response.write( job.results);
+        response.end();
+    } else if( job.state == 'queued' ) { // add listeners for when it starts
+        response.write('waiting on queue...\n');
+        job.ondata.push( function( data ) {
+            response.write( String(data) );
+        });
+        job.onclose.push( function( code ) {
+            response.write('done, code: ' + code );
+            response.end();
+        });
+    } else { // write the output of cmdobj, as it happens...
+        response.write( job.results );
+        var cmdobj = job.cmdobj;
+        cmdobj.stdout.on('data', function(data) {
+           response.write( String(data) );
+        });
+        cmdobj.stderr.on('data', function(data) {
+            response.write( 'stderr: ' + String(data) );
+        });
+        cmdobj.on('close', function (code) {
+            response.write('child process exited with code ' + code);
+            response.end();
+        });
     }
 }
+
+function getJobs( request, response ) {
+    response.writeHead(200, {'Content-type': 'application/json; charset=utf-8' } );
+    response.end( JSON.stringify( listToFilteredList( jobs, ['done','cmd','id','state','args', 'dir'] ) ) );
+}
+
+function kill( request, response ) {
+    response.writeHead(200, {'Content-type': 'application/json; charset=utf-8' } );
+    var id = queryDic.id;
+    console.log('killing id: ' + id );
+    var job = jobs[id];
+    console.log('job: ' + job );
+    job.cmdobj.kill();
+    var result = {'result': 'success'};
+    response.end( JSON.stringify( result ) );
+}
+
+var app = express();
+var router = express.Router();
+
+app.use( compression() ); // gzip html pages
+app.use( bodyParser.urlencoded( { 'extended': false } ) ); // parse body
+app.use( express.static(path.join( __dirname + '/public' ) ) ); // server pages from public directory
+app.use( '/md5', express.static( md5path ) ); // serve md5 js pages
+app.use( '/jquery', express.static( jquerypath ) ); // serve jquery js pages
+app.use( '/angular', express.static( angularpath ) );
+app.use( '/bootstrap', express.static( bootstrappath ) );
+app.get( '/', function( req, res ) {
+    res.sendFile( __dirname + '/public/index.html' );
+});
+app.use( function( request, response, next ) { // then we can always use req.query2[somekey]
+                                               // no matter post or get
+    request.query2 = requestToDic( request );
+    next();
+});
+router.use('/run2', run2 );
+router.use( function( request, response, next ) {
+    // add filter for password
+    console.log( request.path );
+    var checkpass = request.query2.checkpass;
+    console.log('checkpass: ' + checkpass );
+    if( typeof checkpass == 'undefined' || !checkPass( checkpass ) ) {
+        response.writeHead(200, {'Content-type': 'application/json; charset=utf-8' } );
+        response.end(JSON.stringify( { 'result': 'fail', 'error': 'checksum mismatch, check password' }, 0, 4 ) );
+        return;
+    }
+    console.log('pass ok :-)' );
+    next();
+});
+router.use('/job', getJob );
+router.use('/jobs', getJobs );
+router.use('/kill', kill );
+app.use( '/', router );
 
 var isSsl = false;
 
@@ -368,7 +320,7 @@ function startServer() {
         isSsl = true;
         https.createServer( options, function(request, response) {
             try {
-                serverFunction(request,response);
+                app( request, response );
             }catch( e ) {
                 console.log('something went wrong:' + e );
                 response.end('something went wrong ' + e);
@@ -376,10 +328,9 @@ function startServer() {
         } ).listen(8888);
         console.log('key.pem and cert.pem detected: started using https protocol, use https:// to connect, port 8888');
     } else {
-        //console.log("sorry, running as http isn't supported any more.  Please create a key.pem and cert.pem file, so we can use https");
         http.createServer( function(request, response) {
             try {
-                serverFunction(request,response);
+                app(request,response);
             }catch( e ) {
                 console.log('something went wrong:' + e );
                 response.end('something went wrong ' + e);

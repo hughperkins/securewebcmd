@@ -2,8 +2,9 @@
 <head>
 <meta http-equiv="cache-control" content="no-cache" />
 <meta charset="utf-8" />
-<script src="jquery.min.js"></script>
-<script src="md5.min.js"></script>
+<script src="jquery/jquery.min.js"></script>
+<script src="md5/md5.min.js"></script>
+<!--<script src="angular/angular.min.js"></script>-->
 <style>
 </style>
 <script>
@@ -11,10 +12,10 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
 function tail( id ) {
-    $('#myiframe').attr('src','/job?jobId=' + id + '&saltedpass=' + getSaltedPassword());
+    $('#myiframe').attr('src','/job?jobId=' + id + '&checkpass=' + getSaltedPassword());
 }
 function kill( id ) {
-    $.post('/kill', {'id': id, 'saltedpass': getSaltedPassword() }, function( response ) {
+    $.post('/kill', {'id': id, 'checkpass': getSaltedPassword() }, function( response ) {
         console.log( response );
         console.log( response.result );
     });
@@ -32,7 +33,7 @@ function getSaltedPassword() {
     return saltedPass;
 }
 function refreshJobs() {
-    $.get( '/jobs', {'saltedpass': getSaltedPassword()}, function( response ) {
+    $.get( '/jobs', {'checkpass': getSaltedPassword()}, function( response ) {
         var jobs = response;
         //console.log( jobs.length );
         var newHtml = '';
