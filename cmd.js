@@ -22,10 +22,15 @@ var jquerypath = path.dirname( require.resolve('jquery') );
 var angularpath = path.dirname( require.resolve('angular' ) );
 var bootstrappath = path.dirname( path.dirname( require.resolve( 'bootstrap' ) ) );
 
+auth = false; // should be true for prod...
+
 //var nextJob = 0;
 var jobs = [];
 var currentJob = null;
 var queuedJobs = [];
+
+//var inProgress = {};
+//var nextProgressIndex = 0;
 
 var schema = {
     properties: {
@@ -39,15 +44,20 @@ var schema = {
 };
 
 var password = '';
-prompt.start();
-prompt.get(schema, function( err, result ) {
-    password = result.password;
-    if( password != result.passwordcheck ) {
-        console.log("error: password mismatch");
-    } else {
-        startServer();
-    }
-});
+if( auth ) {
+    prompt.start();
+    prompt.get(schema, function( err, result ) {
+        password = result.password;
+        if( password != result.passwordcheck ) {
+            console.log("error: password mismatch");
+        } else {
+            startServer();
+        }
+    });
+} else {
+    console.log('WARNING: authorization disabled, development environment only...');
+    startServer();
+}
             
 if( fs.existsSync( __dirname + '/jobs.json' ) ) {
     jobs = JSON.parse(fs.readFileSync(__dirname + '/jobs.json', 'utf8'));
@@ -180,6 +190,13 @@ function startJob( job ) {
         jobFinished( job );
         writeJobs();
     });
+    cmdobj.on('error', function (code) {
+        job.results += 'child process exited with code: ' + code + '\n';
+        runEvent( job.onclose, code );
+        console.log('error ' + code);
+        jobFinished( job );
+        writeJobs();
+    });
 }
 
 function run2( request, response ) {
@@ -188,17 +205,19 @@ function run2( request, response ) {
     console.log('request.body:', request.body );
     var cmd = request.query2.cmd;
     var dir = request.query2.dir;
-    var theirCheck = request.query2.check;
-    console.log('cmd: ' + cmd );
-    console.log('dir: ' + dir );
-    var stringToCheck = password + '||' + dir + '||' + cmd;
-    console.log('stringToCheck: [' + stringToCheck + ']' );
-    var ourCheck = md5.md5( stringToCheck );
-    console.log('their check: ' + theirCheck );
-    console.log('our check: ' + ourCheck );
-    if( theirCheck != ourCheck ) {
-        response.end(JSON.stringify({'result': 'fail', 'error': 'checksum error' } ) );
-        return;
+    if( auth ) {
+        var theirCheck = request.query2.check;
+        console.log('cmd: ' + cmd );
+        console.log('dir: ' + dir );
+        var stringToCheck = password + '||' + dir + '||' + cmd;
+        console.log('stringToCheck: [' + stringToCheck + ']' );
+        var ourCheck = md5.md5( stringToCheck );
+        console.log('their check: ' + theirCheck );
+        console.log('our check: ' + ourCheck );
+        if( theirCheck != ourCheck ) {
+            response.end(JSON.stringify({'result': 'fail', 'error': 'checksum error' } ) );
+            return;
+        }
     }
 //            response.end();
     var splitcmd = cmd.split(' ' );
@@ -258,10 +277,15 @@ function getJob( request, response ) {
             response.end();
         });
     } else { // write the output of cmdobj, as it happens...
+        console.log('output cmdobj results as happen...');
+        console.log(job.results);
         response.write( job.results );
         var cmdobj = job.cmdobj;
+        console.log('adding listeners...');
         cmdobj.stdout.on('data', function(data) {
-           response.write( String(data) );
+            console.log('got data... ');
+            console.log(String(data) );
+            response.write( String(data) );
         });
         cmdobj.stderr.on('data', function(data) {
             response.write( 'stderr: ' + String(data) );
@@ -302,11 +326,34 @@ function remove( request, response ) {
     response.end( JSON.stringify( result ) );
 }
 
-var app = express();
-var router = express.Router();
+function shouldCompress(req, res) {
+//    console.log( req.query2 );
+    if (req.headers['x-no-compression'] ) {
+        return false
+    }
 
-app.use( compression() ); // gzip html pages
+    if( typeof req.query2 != 'undefined' ) {
+        if( req.query2.nocompress == '1' ) {
+            return false;
+        }
+    }
+    return compression.filter(req, res)
+}
+
+var app = express();
+//var router = express.Router();
+
+//app.use( function( request, response, next ) {
+//    console.log( 'url: ' + request.url );
+//    if( request.url == '/' ) {
+//        request.url = '/gzip/index.html';
+//    }
+//    next();
+//});
+
+app.use(compression({filter: shouldCompress}));
 app.use( bodyParser.json() ); // note: angular uses json, jquery uses urlencoded
+
 app.use( express.static(path.join( __dirname + '/public' ) ) ); // server pages from public directory
 app.use( '/md5', express.static( md5path ) ); // serve md5 js pages
 app.use( '/jquery', express.static( jquerypath ) ); // serve jquery js pages
@@ -315,13 +362,18 @@ app.use( '/bootstrap', express.static( bootstrappath ) );
 app.get( '/', function( req, res ) {
     res.sendFile( __dirname + '/public/index.html' );
 });
+
 app.use( function( request, response, next ) { // then we can always use req.query2[somekey]
                                                // no matter post or get
     request.query2 = requestToDic( request );
     next();
 });
-router.use('/run2', run2 );
-router.use( function( request, response, next ) {
+app.use('/run2', run2 );
+app.use( function( request, response, next ) {
+    if( !auth ) {
+        next();
+        return;
+    }
     // add filter for password
     console.log( request.path );
 //    console.log( 'request.body: ', request.body );
@@ -335,11 +387,11 @@ router.use( function( request, response, next ) {
 //    console.log('pass ok :-)' );
     next();
 });
-router.use('/job', getJob );
-router.use('/jobs', getJobs );
-router.use('/kill', kill );
-router.use('/remove', remove );
-app.use( '/', router );
+app.use('/job', getJob );
+app.use('/kill', kill );
+app.use('/remove', remove );
+app.use('/jobs', getJobs );
+//app.use( '/', dynamicRouter );
 
 var isSsl = false;
 
@@ -353,7 +405,7 @@ function startServer() {
         https.createServer( options, function(request, response) {
             try {
                 app( request, response );
-            }catch( e ) {
+            } catch( e ) {
                 console.log('something went wrong:' + e );
                 response.end('something went wrong ' + e);
             }
@@ -363,7 +415,7 @@ function startServer() {
         http.createServer( function(request, response) {
             try {
                 app(request,response);
-            }catch( e ) {
+            } catch( e ) {
                 console.log('something went wrong:' + e );
                 response.end('something went wrong ' + e);
             }
@@ -371,4 +423,10 @@ function startServer() {
         console.log('key.pem and cert.pem not detected: started using http protocol, use http:// to connect, port 8888');
     }
 }
+
+//setInterval( function() {
+//    console.log( inProgress );
+//}, 1000 );
+
+
 

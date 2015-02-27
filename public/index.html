@@ -85,7 +85,7 @@ app.controller( 'maincontroller', function( $scope, $http ) {
     }
     $scope.tail = function( job ) {
         console.log('tailing:', job );
-        $('#myiframe').attr('src','/job?jobId=' + job.id + '&checkpass=' + hashPassword($scope.password) );
+        $('#myiframe').attr('src','/job?jobId=' + job.id + '&checkpass=' + hashPassword($scope.password) + '&nocompress=1' );
        // $scope.iframesrc = '/job?jobId=' + job.id + '&checkpass=' + hashPassword($scope.password);
     }
     $scope.copyArgs = function( job ) {
@@ -134,55 +134,59 @@ app.controller( 'maincontroller', function( $scope, $http ) {
 </head>
 <body>
 <div class="container" ng-app="mainapp" ng-controller="maincontroller">
-<h1>Launch</h1>
-<br />
-<br />
-<form class="form-horizontal">
-    <div class="form-group">
-        <label for="password" class="control-label col-xs-2">Password</label> 
-        <div class="col-xs-10">
-         <input type="password" ng-model="password" class="form-control" placeholder="password" id="password" />
+    <h1>Launch</h1>
+    <br />
+    <br />
+    <form class="form-horizontal">
+        <div class="form-group">
+            <label for="password" class="control-label col-xs-2">Password</label> 
+            <div class="col-xs-10">
+             <input type="password" ng-model="password" class="form-control" placeholder="password" id="password" />
+            </div>
         </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-2">Directory</label>
-        <div class="col-xs-10">
-            <input type="text" ng-model="dir" class="form-control col-xs-10" name="dir" placeholder="working directory" id="dir" placeholder="working directory" />
+        <div class="form-group">
+            <label class="control-label col-xs-2">Directory</label>
+            <div class="col-xs-10">
+                <input type="text" ng-model="dir" class="form-control col-xs-10" name="dir" placeholder="working directory" id="dir" placeholder="working directory" />
+            </div>
         </div>
-    </div>
-    <div class="form-group">
-        <label class="control-label col-xs-2">Cmd</label>
-        <div class=" col-xs-10">
-            <input type="text" ng-model="cmd" class="form-control" name="cmd" placeholder="command to run" id="cmd" value="" />
+        <div class="form-group">
+            <label class="control-label col-xs-2">Cmd</label>
+            <div class=" col-xs-10">
+                <input type="text" ng-model="cmd" class="form-control" name="cmd" placeholder="command to run" id="cmd" value="" />
+            </div>
         </div>
-    </div>
-    <div class="form-group">
-        <div class="col-xs-2 col-xs-offset-2">
-            <button class="btn btn-primary" ng-click="launch()" id="go">Launch <span class="glyphicon glyphicon-play" /></button>
+        <div class="form-group">
+            <div class="col-xs-2 col-xs-offset-2">
+                <button class="btn btn-primary" ng-click="launch()" id="go">Launch <span class="glyphicon glyphicon-play" /></button>
+            </div>
         </div>
+    </form>
+    <br />
+    <h1>History</h1>
+    <br />
+    <button class="btn btn-default" ng-click="refreshJobs()">Refresh <span class="glyphicon glyphicon-refresh" ></span></button><br />
+    <br />
+    <div id="jobs">
+        <table class="table">
+        <tr><th>Id</th><th>Command<th>State<th>Actions</tr>
+        <tr ng-repeat="job in jobs | orderBy:'id'" >
+            <td>{{job.id}}</td>
+            <td>{{job.cmd}} {{job.joinedargs}}</td>
+            <td>{{job.state}}</td>
+            <td><button class="btn btn-default" ng-click="tail( job )">Results</button>
+            <button class="btn btn-default" ng-click="copyArgs( job )">Copy</button>
+            <button class="btn btn-danger" ng-click="kill( job )" ng-hide="job.done == true">Kill</button>
+            <button class="btn btn-danger" ng-click="remove( job )" ng-hide="job.done != true">Remove</button>
+        </tr>
+        </table>
     </div>
-</form>
-<br />
-<div id="outputdiv"></div>
-<h1>History</h1>
-<br />
-<button class="btn btn-default" ng-click="refreshJobs()">Refresh <span class="glyphicon glyphicon-refresh" ></span></button><br />
-<br />
-<div id="jobs">
-<table class="table">
-<tr><th>Id</th><th>Command<th>State<th>Actions</tr>
-<tr ng-repeat="job in jobs | orderBy:'-id'" >
-<td>{{job.id}}</td><td>{{job.cmd}} {{job.joinedargs}}</td><td>{{job.state}}</td>
-
-<td><button class="btn btn-default" ng-click="tail( job )">Results</button>
-<button class="btn btn-default" ng-click="copyArgs( job )">Copy</button>
-<button class="btn btn-danger" ng-click="kill( job )" ng-hide="job.done == true">Kill</button>
-<button class="btn btn-danger" ng-click="remove( job )" ng-hide="job.done != true">Remove</button>
-</tr>
-</table>
+    <h1>Results</h1>
+    <div id="outputdiv">
+    </div>
 </div>
-</div>
-<iframe height="450" width="1024" id="myiframe" style='display: block'></iframe>
+<iframe height="450" width="1024" id="myiframe" style='display: none'>
+</iframe>
 </body>
 </html>
 
