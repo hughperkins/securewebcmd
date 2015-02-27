@@ -9,6 +9,7 @@ Security:
 
 Functions:
 * see history of commands run previously
+* watch results of command in real-time, don't have to wait for command to finish running first
 * view results of any command, currently running, or historic
 * results are persistent, even after server restart
 * uses nodejs, simple to install and run
