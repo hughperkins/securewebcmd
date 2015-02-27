@@ -15,6 +15,8 @@ Functions:
   * doesn't need apache etc ...
 * can kill jobs after starting them
 
+![screenshot-server](screenshots/securewebcmd-server.png)
+
 ![screenshot0](screenshots/securewebcmd0.png)
 
 ![screenshot1](screenshots/securewebcmd1.png)
