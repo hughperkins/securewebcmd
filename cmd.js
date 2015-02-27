@@ -87,6 +87,15 @@ function listToFilteredList( list, properties ) {
     return filteredList;    
 }
 
+function getJobIndex( jobId ) {
+    for( var i in jobs ) {
+        if( jobs[i].id == jobId ) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 function setListAttr( list, prop, value ) {
     var keys = Object.keys( list );
     for( var i = 0; i < keys.length; i++ ) {
@@ -277,6 +286,17 @@ function kill( request, response ) {
     response.end( JSON.stringify( result ) );
 }
 
+function remove( request, response ) {
+    response.writeHead(200, {'Content-type': 'application/json; charset=utf-8' } );
+    var id = request.query2.id;
+    var index = getJobIndex( id );
+    console.log('removing id: ' + id, jobs[index] );
+    jobs.splice(index,1);
+    writeJobs();
+    var result = {'result': 'success'};
+    response.end( JSON.stringify( result ) );
+}
+
 var app = express();
 var router = express.Router();
 
@@ -313,6 +333,7 @@ router.use( function( request, response, next ) {
 router.use('/job', getJob );
 router.use('/jobs', getJobs );
 router.use('/kill', kill );
+router.use('/remove', remove );
 app.use( '/', router );
 
 var isSsl = false;

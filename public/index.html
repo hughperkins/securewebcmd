@@ -39,6 +39,16 @@ function hashPassword(password) {
     var saltedPass = salt + '|' + md5( salt + '|' + password );
     return saltedPass;
 }
+
+function getJobIndex( jobs, jobId ) {
+    for( var i in jobs ) {
+        if( jobs[i].id == jobId ) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 var oldLength = 0;
 var oldText = '';
 function refreshOutput() {
@@ -98,6 +108,17 @@ app.controller( 'maincontroller', function( $scope, $http ) {
         console.log('tailing:', job );
         $('#myiframe').attr('src','/job?jobId=' + job.id + '&checkpass=' + hashPassword($scope.password) );
     }
+    $scope.copyArgs = function( job ) {
+        console.log( 'copyargs ', job );
+        $scope.dir = job.dir;
+        $scope.cmd = job.cmd; 
+    }
+    $scope.remove = function( job ) {
+        $http.post('/remove', { 'checkpass': hashPassword($scope.password), 'id': job.id } ).success( function( data ) {
+            var index = getJobIndex( $scope.jobs, job.id );
+            $scope.jobs.splice( index, 1 );
+        });
+    }
     $scope.refreshJobs();
 });
 </script>
@@ -145,9 +166,9 @@ app.controller( 'maincontroller', function( $scope, $http ) {
 <td>{{job.id}}</td><td>{{job.cmd}} {{job.joinedargs}}</td><td>{{job.state}}</td>
 
 <td><button class="btn btn-default" ng-click="tail( job )">Results</button>
-<button class="btn btn-default" ng-click="kill( job )" ng-hide="job.done == true">Kill</button>
 <button class="btn btn-default" ng-click="copyArgs( job )">Copy</button>
-
+<button class="btn btn-danger" ng-click="kill( job )" ng-hide="job.done == true">Kill</button>
+<button class="btn btn-danger" ng-click="remove( job )" ng-hide="job.done != true">Remove</button>
 </tr>
 </table>
 </div>
