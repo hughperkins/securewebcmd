@@ -42,30 +42,35 @@ npm start securewebcmd
 # What if I run a task while another is already running?
 
 * it will be queued
-* it will start once the running task finishes, or you click 'kill' to kill the running task
+* it will start once the running task finishes, or you kill the currently running task
 
-# How is it secured, since it's using http?
+# How is it secured?
 
-* in http mode, the password isn't sent to the server, it's used to generate an md5 hash of the command and its arguments
-* the hash is sent to the server
-* the server recreates the hash, based on the password you typed when you started the server, the command, and the arguments
-* if the hash doesnt match the one your client sent, the request is ignored, otherwise it runs, and the results are piped back to the internet browser
+## In https mode:
+* everything is encrypted, by virtue of using https
+* all commands, including viewing, and running things, are password-protected (but the password is never sent to the server, just used to create a salted hash)
+
+## In http mode:
+* all commands, including viewing, and running things, are password-protected, using password hashes
+* so, it would be challenging for someone to run arbitrary commands against the server
+* however, in http mode, if someone can sniff the traffic they can:
+  * do replay attacks, ie run the same commands over and over again
+    * this includes sending requests for viewing arbitrary results
+  * read all the traffic (except the password, which is never directly transmitted, just used to send a salted hash)
 
 # Is my data encrypted during transport, in either direction?
 
-No. Not encrypted, simply, one needs to know the password, if one wants the request sent to the server to be executed on the server.  The request and the results themselves are sent in clear.
-
-If you use https, then the traffic is encrypted :-)
+Yes, if you use https.  No, if you don't.
 
 # Is it secure from a man-in-middle attack?
 
-No.  If someone can change the traffic en-route, they can change the javascript sent to the browser.  (If you use https, you're more secure on this front, as long as you have some way of validating that the certificate you are receiving on the browser is the one the server is using).
+Yes, if you use https, and have some way of validating the certificate from the browser side. Otherwise, not.
 
 # Can I use https?
 
-Why, yes, you can :-)  Do the following, from inside the `securewebcmd` directory:
+Yes.  From inside the `securewebcmd` directory, do:
 ```bash
-openssl genrsa -out key.pem
+openssl genrsa -out key.pem   (note: just hit return several times, to accept the defaults)
 openssl req -new -key key.pem -out csr.pem
 openssl x509 -req -days 9999 -in csr.pem -signkey key.pem -out cert.pem
 rm csr.pem
@@ -74,13 +79,13 @@ rm csr.pem
 ... and connect to [https://localhost:8888](https://localhost:8888), instead of [http://localhost:8888](http://localhost:8888)
 * since it is using a self-signed certificate, you will need to accept the warnings that appear
 
-# If I use https, can people do a man-in-the middle attack etc now?
+# If I use https, can people do a man-in-the middle attack etc?
 
-Hmmm, yeah, kind of, if you have no way of checking the self-signed certificate in the browser is the same one you generated, which in general one just clicks 'accept'.
+If you have some way of ensuring that the certificate you see from the browser is the one that the server is using, then tricky.  Otherwise, yes.
 
-# So why don't I just not use https, and stick with the md5 hash?
+# Why don't I just not use https, and stick with the md5 hash?
 
-Well, in http, everything you transmit is transmitted in clear, and so you're susceptible to replay attacks and so on.  In https, it's not readable, providing protection against passive attacks.
+Well, in http, everything you transmit is transmitted in clear, and so you're susceptible to replay attacks and so on.  In https, traffic is not easily readable, providing protection against passive attacks.
 
 # What libraries does it use?
 
