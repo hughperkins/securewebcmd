@@ -94,6 +94,7 @@ app.controller( 'maincontroller', function( $scope, $http ) {
         console.log('tailing:', job );
         $('#myiframe').attr('src','/job?jobId=' + job.id + '&checkpass=' + hashPassword($scope.password) + '&nocompress=1' );
         $('#resultsmodal').modal('show');
+        $scope.modalresultstitle = job.cmd + ' ' + job.joinedargs
        // $scope.iframesrc = '/job?jobId=' + job.id + '&checkpass=' + hashPassword($scope.password);
     }
     $scope.copyArgs = function( job ) {
@@ -123,7 +124,7 @@ app.controller( 'maincontroller', function( $scope, $http ) {
         $('#outputdiv').html(newText.replace(/  /g, ' &nbsp;').replace(/\n/g, '<br />\n'));
         oldLength = newText.length;
         oldText = newText;
-        //$scope.refreshJobs();
+        $scope.refreshJobs();
         console.log('exiting refreshoutput');
     }
     window.setInterval( function() {
@@ -195,23 +196,19 @@ app.controller( 'maincontroller', function( $scope, $http ) {
         </tr>
         </table>
     </div>
-    <h1>Results</h1>
-    <div id="outputdivold">
-    </div>
 
 <div class="modal fade" id="resultsmodal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl">
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title" id="myModalLabel">Modal title</h4>
+        <h4 class="modal-title" id="myModalLabel">Results for '{{modalresultstitle}}'</h4>
       </div>
       <div class="modal-body" id="outputdiv" style="white-space: normal !important;">
         ...
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Save changes</button>
+        <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
       </div>
     </div>
   </div>

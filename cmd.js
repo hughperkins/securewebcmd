@@ -64,13 +64,13 @@ if( fs.existsSync( __dirname + '/jobs.json' ) ) {
 }
 
 function checkPass( checkpass ) {
-    console.log('checkpass( ' + checkpass + ' )');
+//    console.log('checkpass( ' + checkpass + ' )');
     var splitcheckpass = checkpass.split('|');
     var salt = splitcheckpass[0];
     var checksum = splitcheckpass[1];
     var ourchecksum = md5.md5( salt + '|' + password );
-    console.log( 'ourchecksum: ' + ourchecksum );
-    console.log( 'theirchecksum: ' + checkpass );
+//    console.log( 'ourchecksum: ' + ourchecksum );
+//    console.log( 'theirchecksum: ' + checkpass );
     return ourchecksum == checksum;
 }
 
@@ -258,7 +258,7 @@ function getJob( request, response ) {
 //    console.log('requested jobid: ' + jobId );
     var index = getJobIndex( jobId );
     var job = jobs[index];
-    console.log('job: ' + job );
+//    console.log('job: ', job );
     if( typeof job == 'undefined' ) {
         response.write('job unknown');
         response.end();
@@ -309,7 +309,7 @@ function kill( request, response ) {
     var index = getJobIndex( id );
 //    console.log('killing id: ' + id );
     var job = jobs[index];
-    console.log('killing job', job );
+//    console.log('killing job', job );
     job.cmdobj.kill();
     var result = {'result': 'success'};
     response.end( JSON.stringify( result ) );
@@ -319,7 +319,7 @@ function remove( request, response ) {
     response.writeHead(200, {'Content-type': 'application/json; charset=utf-8' } );
     var id = request.query2.id;
     var index = getJobIndex( id );
-    console.log('Removing job', jobs[index] );
+//    console.log('Removing job', jobs[index] );
     jobs.splice(index,1);
     writeJobs();
     var result = {'result': 'success'};
