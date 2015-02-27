@@ -13,9 +13,6 @@
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
-function tail( id ) {
-    $('#myiframe').attr('src','/job?jobId=' + id + '&checkpass=' + getSaltedPassword());
-}
 function kill( id ) {
     $.post('/kill', {'id': id, 'checkpass': getSaltedPassword() }, function( response ) {
         console.log( response );
@@ -42,44 +39,6 @@ function hashPassword(password) {
     var saltedPass = salt + '|' + md5( salt + '|' + password );
     return saltedPass;
 }
-function refreshJobs_() {
-    $.get( '/jobs', {'checkpass': getSaltedPassword()}, function( response ) {
-        var jobs = response;
-        //console.log( jobs.length );
-        var newHtml = '';
-        for( var i = 0; i < jobs.length; i++ ) {
-            var job = jobs[i];
-            newHtml += jobToHtml( job ) + '<br />';
-        }
-        $('#jobs').html(newHtml);
-    });
-}
-function jobToHtml( job ) {
-    //console.log( job );
-    //console.log( 'job dir: ' + job.dir );
-    //console.log( 'job cmd: ' + job.cmd );
-    var argsstring = '';
-    if( typeof job.args != 'undefined' ) {
-        argsstring = '' + job.args.join(' ');
-    }
-    var fullcmd = job.cmd;
-    if( argsstring != '' ) {
-        fullcmd += ' ' + argsstring;
-    }
-    var jobhtml = job.id + ' ' + job.cmd + ' ' + argsstring + ' ' + job.state;
-    //jobhtml += ' ' + job.done;
-    if( job.state == 'running' ) { 
-        jobhtml += '&nbsp;&nbsp;&nbsp;<input type="button" class="tail" value="tail" onclick="tail(' + job.id + ');" />';
-        jobhtml += '<input type="button" class="kill" value="kill" onclick="kill(' + job.id + ');" />';
-    } else if ( job.state == 'done' ) {
-        jobhtml += '&nbsp;&nbsp;&nbsp;<input type="button" class="tail" value="results" onclick="tail(' + job.id + ');" />';
-    } else { // queued
-        jobhtml += '&nbsp;&nbsp;&nbsp;<input type="button" class="tail" value="tail" onclick="tail(' + job.id + ');" />';
-    }
-    jobhtml += '<input type="button" class="copyargs" value="copy values" onclick="copyArgs(\'' + job.dir + '\',\'' + fullcmd + '\');" />';
-    //console.log( jobhtml );
-    return jobhtml;
-}
 var oldLength = 0;
 var oldText = '';
 function refreshOutput() {
@@ -92,55 +51,17 @@ function refreshOutput() {
     oldText = newText;
     refreshJobs();
 }
-function addJobToHtml( job ) {
-    $('#jobs').append( jobToHtml(job) + '<br />' );
-}
 $( function() {
     window.setInterval( function() {
         refreshOutput();
     }, 3000 );
-    $('#go').click( function( event ) {
-        var passwordValue = $('#password').val();
-        var dirValue = $('#dir').val();
-        var cmdValue = $('#cmd').val();
-        var stringToCheck = passwordValue + '||' + dirValue + '||' + cmdValue;
-        //console.log(stringToCheck);
-        var checksum = md5( stringToCheck );
-        //console.log(checksum);
-        var urlpath = '/run2?dir=' + dirValue + '&cmd=' + cmdValue + '&check=' + checksum;
-        //console.log( urlpath );
-
-        $.post('/run2', { 'dir': dirValue, 'cmd': cmdValue, 'check': checksum }, function( response ) {
-            var job = response;
-            //console.log(job);
-            //console.log(job.result );
-            if( job.result == 'success' ) {
-                //console.log( response );
-                //console.log( response.id );
-                addJobToHtml( job );
-                tail( response.id );
-            } else {
-                alert(job.error);
-            }
-        }, 'json' );
-    });
     $('#myiframe').load( function( event ) {
         console.log('iframe load');
         refreshOutput();
     });
-    //refreshJobs();
 });
 
 var app = angular.module('mainapp', [] );
-/*app.controller( 'maincontroller', [
-    '$scope',
-    function( $scope ) {
-        console.log('$scope function');
-        $scope.refreshJobs = function() {
-            console.log('clicked $scope.refreshJobs');
-        }
-    }
-]);*/
 app.controller( 'maincontroller', function( $scope, $http ) {
     $scope.refreshJobs = function() {
         var data = { 'checkpass': hashPassword( $scope.password ) };
@@ -154,6 +75,28 @@ app.controller( 'maincontroller', function( $scope, $http ) {
             }
             $scope.jobs = data;
         });
+    }
+    $scope.launch = function() {
+        if( typeof $scope.cmd == 'undefined' || $scope.cmd == '' ) {
+            alert('Please provide a command, and try again');
+            return;
+        }
+        var stringToCheck = ( $scope.password || '' ) + '||' + $scope.dir + '||' + $scope.cmd;
+        console.log(stringToCheck);
+        var checksum = md5( stringToCheck );
+        console.log(checksum);
+
+        var data = { 'dir': $scope.dir, 'cmd': $scope.cmd, 'check': checksum };
+        console.log('submitting:', data );
+        $http.post('/run2', data ).success( function( data ) {
+            var job = data;
+            console.log(job);
+            $scope.jobs.push(job);
+        });
+    }
+    $scope.tail = function( job ) {
+        console.log('tailing:', job );
+        $('#myiframe').attr('src','/job?jobId=' + job.id + '&checkpass=' + hashPassword($scope.password) );
     }
     $scope.refreshJobs();
 });
@@ -174,18 +117,18 @@ app.controller( 'maincontroller', function( $scope, $http ) {
     <div class="form-group">
         <label class="control-label col-xs-2">Directory</label>
         <div class="col-xs-10">
-            <input type="text" class="form-control col-xs-10" name="dir" placeholder="working directory" id="dir" placeholder="working directory" />
+            <input type="text" ng-model="dir" class="form-control col-xs-10" name="dir" placeholder="working directory" id="dir" placeholder="working directory" />
         </div>
     </div>
     <div class="form-group">
         <label class="control-label col-xs-2">Cmd</label>
         <div class=" col-xs-10">
-            <input type="text" size="100" class="form-control" name="cmd" placeholder="command to run" id="cmd" value="" />
+            <input type="text" ng-model="cmd" class="form-control" name="cmd" placeholder="command to run" id="cmd" value="" />
         </div>
     </div>
     <div class="form-group">
         <div class="col-xs-2 col-xs-offset-2">
-            <button class="btn btn-primary" id="go">Launch <span class="glyphicon glyphicon-play" /></button>
+            <button class="btn btn-primary" ng-click="launch()" id="go">Launch <span class="glyphicon glyphicon-play" /></button>
         </div>
     </div>
 </form>
@@ -200,6 +143,11 @@ app.controller( 'maincontroller', function( $scope, $http ) {
 <tr><th>Id</th><th>Command<th>State</tr>
 <tr ng-repeat="job in jobs | orderBy:'-id'" >
 <td>{{job.id}}</td><td>{{job.cmd}} {{job.joinedargs}}</td><td>{{job.state}}</td>
+
+<td><button class="btn btn-default" ng-click="tail( job )">Results</button>
+<button class="btn btn-default" ng-click="kill( job )" ng-hide="job.done == true">Kill</button>
+<button class="btn btn-default" ng-click="copyArgs( job )">Copy</button>
+
 </tr>
 </table>
 </div>

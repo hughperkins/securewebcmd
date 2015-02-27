@@ -176,12 +176,15 @@ function startJob( job ) {
 function run2( request, response ) {
     console.log('request for /run2');
     response.writeHead(200, {'Content-type': 'application/json; charset=utf-8;' });
+    console.log('request.body:', request.body );
     var cmd = request.query2.cmd;
     var dir = request.query2.dir;
     var theirCheck = request.query2.check;
     console.log('cmd: ' + cmd );
     console.log('dir: ' + dir );
-    var ourCheck = md5.md5( password + '||' + dir + '||' + cmd );
+    var stringToCheck = password + '||' + dir + '||' + cmd;
+    console.log('stringToCheck: [' + stringToCheck + ']' );
+    var ourCheck = md5.md5( stringToCheck );
     console.log('their check: ' + theirCheck );
     console.log('our check: ' + ourCheck );
     if( theirCheck != ourCheck ) {
@@ -213,7 +216,9 @@ function run2( request, response ) {
         job.state = 'queued';
     }
 
-    response.end(JSON.stringify({ 'id': job.id , 'result': 'success', 'cmd': job.cmd, 'args': job.args, 'done': job.done, 'state': job.state, 'dir': job.dir }) );
+    var results = { 'id': job.id , 'result': 'success', 'cmd': job.cmd, 'args': job.args, 'done': job.done, 'state': job.state, 'dir': job.dir };
+    console.log('results:', results );
+    response.end(JSON.stringify(results) );
 }
 
 function getJob( request, response ) {
