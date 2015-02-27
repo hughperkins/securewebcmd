@@ -214,8 +214,9 @@ function run2( request, response ) {
     job.onclose = [];
 //            job.onexit = [];
     job.dir = dir;
+    job.id = jobs[ jobs.length - 1].id + 1;
     jobs[ jobs.length ] = job;
-    job.id = jobs.length - 1;
+//    job.id = jobs.length - 1;
     console.log('job: ' + job );
 
     if( currentJob == null ) {
@@ -227,6 +228,7 @@ function run2( request, response ) {
 
     var results = { 'id': job.id , 'result': 'success', 'cmd': job.cmd, 'args': job.args, 'done': job.done, 'state': job.state, 'dir': job.dir };
     console.log('results:', results );
+    console.log('finished run2 method');
     response.end(JSON.stringify(results) );
 }
 
@@ -235,7 +237,8 @@ function getJob( request, response ) {
     response.writeHead(200, {'Content-type': 'text/plain; charset=utf-8', 'x-frame-options': 'SAMEORIGIN' });
     var jobId = request.query2.jobId;
     console.log('requested jobid: ' + jobId );
-    var job = jobs[jobId];
+    var index = getJobIndex( jobId );
+    var job = jobs[index];
     console.log('job: ' + job );
     if( typeof job == 'undefined' ) {
         response.write('job unknown');
@@ -268,6 +271,7 @@ function getJob( request, response ) {
             response.end();
         });
     }
+    console.log('finished job method');
 }
 
 function getJobs( request, response ) {
@@ -277,9 +281,10 @@ function getJobs( request, response ) {
 
 function kill( request, response ) {
     response.writeHead(200, {'Content-type': 'application/json; charset=utf-8' } );
-    var id = queryDic.id;
+    var id = request.query2.id;
+    var index = getJobIndex( id );
     console.log('killing id: ' + id );
-    var job = jobs[id];
+    var job = jobs[index];
     console.log('job: ' + job );
     job.cmdobj.kill();
     var result = {'result': 'success'};
@@ -319,15 +324,15 @@ router.use('/run2', run2 );
 router.use( function( request, response, next ) {
     // add filter for password
     console.log( request.path );
-    console.log( 'request.body: ', request.body );
+//    console.log( 'request.body: ', request.body );
     var checkpass = request.query2.checkpass;
-    console.log('checkpass: ' + checkpass );
+//    console.log('checkpass: ' + checkpass );
     if( typeof checkpass == 'undefined' || !checkPass( checkpass ) ) {
         response.writeHead(200, {'Content-type': 'application/json; charset=utf-8' } );
         response.end(JSON.stringify( { 'result': 'fail', 'error': 'checksum mismatch, check password' }, 0, 4 ) );
         return;
     }
-    console.log('pass ok :-)' );
+//    console.log('pass ok :-)' );
     next();
 });
 router.use('/job', getJob );

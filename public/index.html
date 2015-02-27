@@ -13,17 +13,6 @@
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
-function kill( id ) {
-    $.post('/kill', {'id': id, 'checkpass': getSaltedPassword() }, function( response ) {
-        console.log( response );
-        console.log( response.result );
-    });
-}
-function copyArgs( dir, cmd ) {
-    console.log( 'copyargs ' + dir + ' ' + cmd );
-    $('#dir').val(dir);
-    $('#cmd').val(cmd); 
-}
 function getSaltedPassword() {
     var password = $('#password').val();
     var salt = getRandomInt(0,100000000);
@@ -51,24 +40,7 @@ function getJobIndex( jobs, jobId ) {
 
 var oldLength = 0;
 var oldText = '';
-function refreshOutput() {
-    var newText = $('#myiframe').contents().text();
-    if( newText == oldText ) {
-        return;
-    }
-    $('#outputdiv').html(newText.replace(/ /g, '&nbsp;').replace(/\n/g, '<br />\n'));
-    oldLength = newText.length;
-    oldText = newText;
-    refreshJobs();
-}
 $( function() {
-    window.setInterval( function() {
-        refreshOutput();
-    }, 3000 );
-    $('#myiframe').load( function( event ) {
-        console.log('iframe load');
-        refreshOutput();
-    });
 });
 
 var app = angular.module('mainapp', [] );
@@ -101,17 +73,25 @@ app.controller( 'maincontroller', function( $scope, $http ) {
         $http.post('/run2', data ).success( function( data ) {
             var job = data;
             console.log(job);
+            if( typeof job.args != 'undefined' ) {
+                job.joinedargs = job.args.join(' ');
+            } else {
+                job.joinedargs = '';
+            }
             $scope.jobs.push(job);
+            $scope.tail( job );
+            console.log('finished calling run2');
         });
     }
     $scope.tail = function( job ) {
         console.log('tailing:', job );
         $('#myiframe').attr('src','/job?jobId=' + job.id + '&checkpass=' + hashPassword($scope.password) );
+       // $scope.iframesrc = '/job?jobId=' + job.id + '&checkpass=' + hashPassword($scope.password);
     }
     $scope.copyArgs = function( job ) {
         console.log( 'copyargs ', job );
         $scope.dir = job.dir;
-        $scope.cmd = job.cmd; 
+        $scope.cmd = job.cmd + ' ' + job.joinedargs; 
     }
     $scope.remove = function( job ) {
         $http.post('/remove', { 'checkpass': hashPassword($scope.password), 'id': job.id } ).success( function( data ) {
@@ -119,6 +99,35 @@ app.controller( 'maincontroller', function( $scope, $http ) {
             $scope.jobs.splice( index, 1 );
         });
     }
+    $scope.kill = function( job ) {
+        $http.post('/kill', { 'checkpass': hashPassword($scope.password), 'id': job.id } ).success( function( data ) {
+            job.done = true;
+            job.state = 'done';
+        });
+    }
+    $scope.refreshOutput = function() {
+        console.log('$scope.refreshOutput()');
+        var newText = $('#myiframe').contents().text();
+        if( newText == oldText ) {
+            console.log('refreshoutput: no change => exiting');
+            return;
+        }
+        $('#outputdiv').html(newText.replace(/ /g, '&nbsp;').replace(/\n/g, '<br />\n'));
+        oldLength = newText.length;
+        oldText = newText;
+        //$scope.refreshJobs();
+        console.log('exiting refreshoutput');
+    }
+    window.setInterval( function() {
+        console.log('set interval start');
+        $scope.refreshOutput();
+        console.log('set interval end');
+    }, 3000 );
+    $('#myiframe').load( function( event ) {
+        console.log('iframe load start');
+        $scope.refreshOutput();
+        console.log('iframe load end');
+    });
     $scope.refreshJobs();
 });
 </script>
@@ -161,7 +170,7 @@ app.controller( 'maincontroller', function( $scope, $http ) {
 <br />
 <div id="jobs">
 <table class="table">
-<tr><th>Id</th><th>Command<th>State</tr>
+<tr><th>Id</th><th>Command<th>State<th>Actions</tr>
 <tr ng-repeat="job in jobs | orderBy:'-id'" >
 <td>{{job.id}}</td><td>{{job.cmd}} {{job.joinedargs}}</td><td>{{job.state}}</td>
 
@@ -173,7 +182,7 @@ app.controller( 'maincontroller', function( $scope, $http ) {
 </table>
 </div>
 </div>
-<iframe height="450" width="1024" id="myiframe" style='display: none'></iframe>
+<iframe height="450" width="1024" id="myiframe" style='display: block'></iframe>
 </body>
 </html>
 
