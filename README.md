@@ -15,6 +15,10 @@ Functions:
   * doesn't need apache etc ...
 * can kill jobs after starting them
 
+![screenshot1](screenshots/securewebcmd1.png)
+
+![screenshot2](screenshots/securewebcmd2.png)
+
 # How to use
 
 ```bash

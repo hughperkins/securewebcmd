@@ -96,6 +96,8 @@ app.controller( 'maincontroller', function( $scope, $http ) {
         });
     }
     $scope.tail = function( job ) {
+        $('#myiframe').contents().html('');
+        $('#outputdiv').html('');
         console.log('tailing:', job );
         $('#myiframe').attr('src','/job?jobId=' + job.id + '&checkpass=' + hashPassword($scope.password) + '&nocompress=1' );
         $('#resultsmodal').modal('show');
