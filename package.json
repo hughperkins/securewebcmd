@@ -1,6 +1,6 @@
 {
   "name": "securewebcmd",
-  "version": "4.3.0",
+  "version": "4.4.0",
   "description": "Run commands on a linux server through a nodejs server",
   "main": "cmd.js",
   "scripts": {

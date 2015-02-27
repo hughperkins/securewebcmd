@@ -41,19 +41,33 @@ function getJobIndex( jobs, jobId ) {
 var oldLength = 0;
 var oldText = '';
 
+$( function() {
+    $('#loginmodal').modal({'show': true, 'keyboard': false });
+});
+
 var app = angular.module('mainapp', [] );
+var intervalId = null;
 app.controller( 'maincontroller', function( $scope, $http ) {
     $scope.refreshJobs = function() {
         var data = { 'checkpass': hashPassword( $scope.password ) };
         $http.post('/jobs', data ).success( function( data ) {
-            for( var i in data ) {
-                if( typeof data[i].args != 'undefined' ) {
-                    data[i].joinedargs = data[i].args.join(' ');
+            console.log( data.result );
+            if( data.result == 'success' ) {
+                console.log('hide login modal...');
+                $('#loginmodal').modal('hide');
+            } else {
+                alert('Password was not recognized.');
+                return;
+            }
+            var jobs = data.jobs;
+            for( var i in jobs ) {
+                if( typeof jobs[i].args != 'undefined' ) {
+                    jobs[i].joinedargs = jobs[i].args.join(' ');
                 } else {
-                    data[i].joinedargs = '';
+                    jobs[i].joinedargs = '';
                 }
             }
-            $scope.jobs = data;
+            $scope.jobs = jobs;
         });
     }
     $scope.launch = function() {
@@ -115,19 +129,35 @@ app.controller( 'maincontroller', function( $scope, $http ) {
         oldLength = newText.length;
         oldText = newText;
         $scope.refreshJobs();
-        console.log('exiting refreshoutput');
+        //  console.log('exiting refreshoutput');
     }
-    window.setInterval( function() {
-        console.log('set interval start');
-        $scope.refreshOutput();
-        console.log('set interval end');
-    }, 3000 );
+    $scope.doLogin = function() {
+        console.log('$scope.doLogin()');
+        $scope.refreshJobs();
+    }
     $('#myiframe').load( function( event ) {
         console.log('iframe load start');
         $scope.refreshOutput();
-        console.log('iframe load end');
+        //console.log('iframe load end');
     });
-    $scope.refreshJobs();
+    intervalId = window.setInterval( function() {
+        //console.log('set interval start');
+        $scope.refreshOutput();
+        //console.log('set interval end');
+    }, 3000 );
+
+    // $scope.refreshJobs();
+    /*$('#resultsmodal').on('show.bs.modal', function(e) {
+        if( intervalId == null ) {
+             3000 );
+        }
+    });
+    $('#resultsmodal').on('hide.bs.modal', function(e) {
+        if( intervalId != null ) {
+            window.clearInterval( intervalId );
+            intervalId = null;
+        }
+    });*/
 });
 </script>
 </head>
@@ -143,12 +173,12 @@ app.controller( 'maincontroller', function( $scope, $http ) {
     <br />
     <br />
     <form class="form-horizontal">
-        <div class="form-group">
-            <label for="password" class="control-label col-xs-2">Password</label> 
-            <div class="col-xs-10">
-             <input type="password" ng-model="password" class="form-control" placeholder="password" id="password" />
-            </div>
-        </div>
+<!--        <div class="form-group">-->
+<!--            <label for="password" class="control-label col-xs-2">Password</label> -->
+<!--            <div class="col-xs-10">-->
+<!--             <input type="password" ng-model="password" class="form-control" placeholder="password" id="password" />-->
+<!--            </div>-->
+<!--        </div>-->
         <div class="form-group">
             <label class="control-label col-xs-2">Directory</label>
             <div class="col-xs-10">
@@ -187,25 +217,50 @@ app.controller( 'maincontroller', function( $scope, $http ) {
         </table>
     </div>
 
-<div class="modal fade" id="resultsmodal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title" id="myModalLabel">Results for '{{modalresultstitle}}'</h4>
-      </div>
-      <div class="modal-body" id="outputdiv" style="white-space: normal !important;">
-        ...
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
-      </div>
+    <div class="modal fade" id="loginmodal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+<!--                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>-->
+                    <h4 class="modal-title" id="loginModalLabel">Secure Web Command Login</h4>
+                </div>
+                <div class="modal-body" >
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <label for="password" class="control-label col-xs-2">Password</label> 
+                            <div class="col-xs-10">
+                                 <input type="password" ng-model="password" class="form-control" placeholder="password" />
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button ng-click="doLogin()" class="btn btn-primary">Login</button>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
 
-<iframe height="450" width="1024" id="myiframe" style='display: none'>
-</iframe>
+    <div class="modal fade" id="resultsmodal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">Results for '{{modalresultstitle}}'</h4>
+                </div>
+                <div class="modal-body" id="outputdiv" >
+                ...
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <iframe height="450" width="1024" id="myiframe" style='display: none'>
+    </iframe>
 
 </div>
 

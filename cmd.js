@@ -300,7 +300,7 @@ function getJob( request, response ) {
 
 function getJobs( request, response ) {
     response.writeHead(200, {'Content-type': 'application/json; charset=utf-8' } );
-    response.end( JSON.stringify( listToFilteredList( jobs, ['done','cmd','id','state','args', 'dir'] ) ) );
+    response.end( JSON.stringify( { 'result': 'success', 'jobs': listToFilteredList( jobs, ['done','cmd','id','state','args', 'dir'] ) } ) );
 }
 
 function kill( request, response ) {
