@@ -33,11 +33,11 @@ securewebcmd
 ... then type in a password of your choice twice
 
 * Connect to the server from a webbrowser, at port 8888, ie [localhost://http:8888](http://localhost:8888)
-* Type in the password, same as the one you entered at the server
-* Type in a command, a directoryt to run in, and click 'run'
+* Type in the password, same as the one you entered at the server, and 'Login'
+* Type in a working directory, a command, and click 'Launch'
 * the command should run, on the server, and the results appear in real-time
-* you can kill the job by clicking 'kill' button next to the running job, at the top of the screen
-* you can view the results for any job, current or past, by clicking the 'results' button, next to the job line, at the top of the window
+* you can kill the job by clicking 'kill' button next to the running job, in the 'History' section
+* you can view the results for any job, current or past, by clicking the 'Results' button, next to the job, in the 'History' section
 
 # What if I run a task while another is already running?
 
