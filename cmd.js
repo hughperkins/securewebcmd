@@ -22,7 +22,7 @@ var jquerypath = path.dirname( require.resolve('jquery') );
 var angularpath = path.dirname( require.resolve('angular' ) );
 var bootstrappath = path.dirname( path.dirname( require.resolve( 'bootstrap' ) ) );
 
-auth = false; // should be true for prod...
+auth = true; // should be true for prod...
 
 //var nextJob = 0;
 var jobs = [];
@@ -163,7 +163,7 @@ function startJob( job ) {
     var args = job.args;
     options = {cwd: job.dir }
 
-    console.log('start');
+    console.log('Starting job', job);
 
     if( job.args.length > 0 ) {
         console.log('has args: ' + args + '<br />');
@@ -200,20 +200,20 @@ function startJob( job ) {
 }
 
 function run2( request, response ) {
-    console.log('request for /run2');
+//    console.log('request for /run2');
     response.writeHead(200, {'Content-type': 'application/json; charset=utf-8;' });
-    console.log('request.body:', request.body );
+//    console.log('request.body:', request.body );
     var cmd = request.query2.cmd;
     var dir = request.query2.dir;
     if( auth ) {
         var theirCheck = request.query2.check;
-        console.log('cmd: ' + cmd );
-        console.log('dir: ' + dir );
+//        console.log('cmd: ' + cmd );
+//        console.log('dir: ' + dir );
         var stringToCheck = password + '||' + dir + '||' + cmd;
-        console.log('stringToCheck: [' + stringToCheck + ']' );
+//        console.log('stringToCheck: [' + stringToCheck + ']' );
         var ourCheck = md5.md5( stringToCheck );
-        console.log('their check: ' + theirCheck );
-        console.log('our check: ' + ourCheck );
+//        console.log('their check: ' + theirCheck );
+//        console.log('our check: ' + ourCheck );
         if( theirCheck != ourCheck ) {
             response.end(JSON.stringify({'result': 'fail', 'error': 'checksum error' } ) );
             return;
@@ -226,8 +226,8 @@ function run2( request, response ) {
     if( splitcmd.length > 1 ) {
         args = splitcmd.slice(1);
     }
-    console.log('cmd1: ' + cmd + '<br />\n' );
-    console.log('cmd1: ' + cmd1 );
+//    console.log('cmd1: ' + cmd + '<br />\n' );
+//    console.log('cmd1: ' + cmd1 );
     job = { 'cmd': cmd1, 'args': args, 'state': 'waiting', 'done': false, 'results': '', 'dir': dir };
     job.ondata = [];
     job.onclose = [];
@@ -236,7 +236,7 @@ function run2( request, response ) {
     job.id = jobs[ jobs.length - 1].id + 1;
     jobs[ jobs.length ] = job;
 //    job.id = jobs.length - 1;
-    console.log('job: ' + job );
+    console.log('request received for new job:', job );
 
     if( currentJob == null ) {
         startJob( job );
@@ -246,8 +246,8 @@ function run2( request, response ) {
     }
 
     var results = { 'id': job.id , 'result': 'success', 'cmd': job.cmd, 'args': job.args, 'done': job.done, 'state': job.state, 'dir': job.dir };
-    console.log('results:', results );
-    console.log('finished run2 method');
+//    console.log('results:', results );
+//    console.log('finished run2 method');
     response.end(JSON.stringify(results) );
 }
 
@@ -255,7 +255,7 @@ function getJob( request, response ) {
     // sameorigin option means we can display it in iframe with no security issues
     response.writeHead(200, {'Content-type': 'text/plain; charset=utf-8', 'x-frame-options': 'SAMEORIGIN' });
     var jobId = request.query2.jobId;
-    console.log('requested jobid: ' + jobId );
+//    console.log('requested jobid: ' + jobId );
     var index = getJobIndex( jobId );
     var job = jobs[index];
     console.log('job: ' + job );
@@ -277,14 +277,14 @@ function getJob( request, response ) {
             response.end();
         });
     } else { // write the output of cmdobj, as it happens...
-        console.log('output cmdobj results as happen...');
-        console.log(job.results);
+//        console.log('output cmdobj results as happen...');
+//        console.log(job.results);
         response.write( job.results );
         var cmdobj = job.cmdobj;
-        console.log('adding listeners...');
+//        console.log('adding listeners...');
         cmdobj.stdout.on('data', function(data) {
-            console.log('got data... ');
-            console.log(String(data) );
+//            console.log('got data... ');
+//            console.log(String(data) );
             response.write( String(data) );
         });
         cmdobj.stderr.on('data', function(data) {
@@ -295,7 +295,7 @@ function getJob( request, response ) {
             response.end();
         });
     }
-    console.log('finished job method');
+//    console.log('finished job method');
 }
 
 function getJobs( request, response ) {
@@ -307,9 +307,9 @@ function kill( request, response ) {
     response.writeHead(200, {'Content-type': 'application/json; charset=utf-8' } );
     var id = request.query2.id;
     var index = getJobIndex( id );
-    console.log('killing id: ' + id );
+//    console.log('killing id: ' + id );
     var job = jobs[index];
-    console.log('job: ' + job );
+    console.log('killing job', job );
     job.cmdobj.kill();
     var result = {'result': 'success'};
     response.end( JSON.stringify( result ) );
@@ -319,7 +319,7 @@ function remove( request, response ) {
     response.writeHead(200, {'Content-type': 'application/json; charset=utf-8' } );
     var id = request.query2.id;
     var index = getJobIndex( id );
-    console.log('removing id: ' + id, jobs[index] );
+    console.log('Removing job', jobs[index] );
     jobs.splice(index,1);
     writeJobs();
     var result = {'result': 'success'};

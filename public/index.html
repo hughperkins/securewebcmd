@@ -1,5 +1,6 @@
 <html>
 <head>
+<title>Secure Web Command, by Hugh Perkins</title>
 <meta http-equiv="cache-control" content="no-cache" />
 <meta charset="utf-8" />
 <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -134,6 +135,12 @@ app.controller( 'maincontroller', function( $scope, $http ) {
 </head>
 <body>
 <div class="container" ng-app="mainapp" ng-controller="maincontroller">
+    <br />
+    <div class="jumbotron">
+     <h1>Secure Web Command</h1>
+    <p>Secure Web Commands lets you run commands on your server through a simple standalone web server, using nodejs. Easy to setup, easy to use.
+    </p>
+    </div>
     <h1>Launch</h1>
     <br />
     <br />
@@ -170,14 +177,14 @@ app.controller( 'maincontroller', function( $scope, $http ) {
     <div id="jobs">
         <table class="table">
         <tr><th>Id</th><th>Command<th>State<th>Actions</tr>
-        <tr ng-repeat="job in jobs | orderBy:'id'" >
+        <tr ng-repeat="job in jobs | orderBy:'-id'" >
             <td>{{job.id}}</td>
             <td>{{job.cmd}} {{job.joinedargs}}</td>
             <td>{{job.state}}</td>
-            <td><button class="btn btn-default" ng-click="tail( job )">Results</button>
-            <button class="btn btn-default" ng-click="copyArgs( job )">Copy</button>
-            <button class="btn btn-danger" ng-click="kill( job )" ng-hide="job.done == true">Kill</button>
-            <button class="btn btn-danger" ng-click="remove( job )" ng-hide="job.done != true">Remove</button>
+            <td><button class="btn btn-default" ng-click="tail( job )">Results <span class="glyphicon glyphicon-envelope" ></span></button>
+            <button class="btn btn-default" ng-click="copyArgs( job )">Re-use <span class="glyphicon glyphicon-edit" ></span></button>
+            <button class="btn btn-danger" ng-click="kill( job )" ng-hide="job.done == true">Kill <span class="glyphicon glyphicon-stop" ></span></button>
+            <button class="btn btn-danger" ng-click="remove( job )" ng-hide="job.done != true">Remove <span class="glyphicon glyphicon-trash" ></span></button>
         </tr>
         </table>
     </div>
