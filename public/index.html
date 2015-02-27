@@ -34,7 +34,15 @@ function getSaltedPassword() {
     //console.log( saltedPass );
     return saltedPass;
 }
-function refreshJobs() {
+function hashPassword(password) {
+    if( typeof password == 'undefined' ) {
+        password = '';
+    }
+    var salt = getRandomInt(0,100000000);
+    var saltedPass = salt + '|' + md5( salt + '|' + password );
+    return saltedPass;
+}
+function refreshJobs_() {
     $.get( '/jobs', {'checkpass': getSaltedPassword()}, function( response ) {
         var jobs = response;
         //console.log( jobs.length );
@@ -120,12 +128,39 @@ $( function() {
         console.log('iframe load');
         refreshOutput();
     });
-    refreshJobs();
+    //refreshJobs();
+});
+
+var app = angular.module('mainapp', [] );
+/*app.controller( 'maincontroller', [
+    '$scope',
+    function( $scope ) {
+        console.log('$scope function');
+        $scope.refreshJobs = function() {
+            console.log('clicked $scope.refreshJobs');
+        }
+    }
+]);*/
+app.controller( 'maincontroller', function( $scope, $http ) {
+    $scope.refreshJobs = function() {
+        var data = { 'checkpass': hashPassword( $scope.password ) };
+        $http.post('/jobs', data ).success( function( data ) {
+            for( var i in data ) {
+                if( typeof data[i].args != 'undefined' ) {
+                    data[i].joinedargs = data[i].args.join(' ');
+                } else {
+                    data[i].joinedargs = '';
+                }
+            }
+            $scope.jobs = data;
+        });
+    }
+    $scope.refreshJobs();
 });
 </script>
 </head>
 <body>
-<div class="container">
+<div class="container" ng-app="mainapp" ng-controller="maincontroller">
 <h1>Launch</h1>
 <br />
 <br />
@@ -133,7 +168,7 @@ $( function() {
     <div class="form-group">
         <label for="password" class="control-label col-xs-2">Password</label> 
         <div class="col-xs-10">
-         <input type="password" class="form-control" placeholder="password" id="password" />
+         <input type="password" ng-model="password" class="form-control" placeholder="password" id="password" />
         </div>
     </div>
     <div class="form-group">
@@ -157,8 +192,17 @@ $( function() {
 <br />
 <div id="outputdiv"></div>
 <h1>History</h1>
-<button class="btn btn-default" onclick="refreshJobs();">Refresh <span class="glyphicon glyphicon-refresh" ></span></button><br />
-<div id="jobs"></div>
+<br />
+<button class="btn btn-default" ng-click="refreshJobs()">Refresh <span class="glyphicon glyphicon-refresh" ></span></button><br />
+<br />
+<div id="jobs">
+<table class="table">
+<tr><th>Id</th><th>Command<th>State</tr>
+<tr ng-repeat="job in jobs | orderBy:'-id'" >
+<td>{{job.id}}</td><td>{{job.cmd}} {{job.joinedargs}}</td><td>{{job.state}}</td>
+</tr>
+</table>
+</div>
 </div>
 <iframe height="450" width="1024" id="myiframe" style='display: none'></iframe>
 </body>

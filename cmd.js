@@ -276,7 +276,7 @@ var app = express();
 var router = express.Router();
 
 app.use( compression() ); // gzip html pages
-app.use( bodyParser.urlencoded( { 'extended': false } ) ); // parse body
+app.use( bodyParser.json() ); // note: angular uses json, jquery uses urlencoded
 app.use( express.static(path.join( __dirname + '/public' ) ) ); // server pages from public directory
 app.use( '/md5', express.static( md5path ) ); // serve md5 js pages
 app.use( '/jquery', express.static( jquerypath ) ); // serve jquery js pages
@@ -293,15 +293,16 @@ app.use( function( request, response, next ) { // then we can always use req.que
 router.use('/run2', run2 );
 router.use( function( request, response, next ) {
     // add filter for password
-//    console.log( request.path );
+    console.log( request.path );
+    console.log( 'request.body: ', request.body );
     var checkpass = request.query2.checkpass;
-//    console.log('checkpass: ' + checkpass );
+    console.log('checkpass: ' + checkpass );
     if( typeof checkpass == 'undefined' || !checkPass( checkpass ) ) {
         response.writeHead(200, {'Content-type': 'application/json; charset=utf-8' } );
         response.end(JSON.stringify( { 'result': 'fail', 'error': 'checksum mismatch, check password' }, 0, 4 ) );
         return;
     }
-//    console.log('pass ok :-)' );
+    console.log('pass ok :-)' );
     next();
 });
 router.use('/job', getJob );
