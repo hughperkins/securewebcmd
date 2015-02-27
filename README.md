@@ -27,8 +27,8 @@ Functions:
 # How to use
 
 ```bash
-npm install securewebcmd
-npm start securewebcmd
+npm install -g securewebcmd
+securewebcmd
 ```
 ... then type in a password of your choice twice
 
