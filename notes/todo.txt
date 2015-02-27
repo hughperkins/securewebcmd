@@ -1,0 +1,11 @@
+todo:
+- login form
+- tabs?
+- remove as much jquery as possible
+
+done:
+- migrate to angular
+- migrate to express
+- migrate to bootstrap
+
+
