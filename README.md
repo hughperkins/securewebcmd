@@ -30,7 +30,7 @@ Functions:
 npm install securewebcmd
 npm start securewebcmd
 ```
-... then type in the password twice
+... then type in a password of your choice twice
 
 * Connect to the server from a webbrowser, at port 8888, ie [localhost://http:8888](http://localhost:8888)
 * Type in the password, same as the one you entered at the server
