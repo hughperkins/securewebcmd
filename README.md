@@ -86,7 +86,7 @@ WHITELIST='ls pwd ./gpuinfo' securewebcmd
 | Option | Description |
 |---------|-------------|
 | PORT=2000 | Change the port that securewebcmd listens on |
-| WHITELIST='ls pwd groups ./gpuinfo ./clconvolve1' | Create whitelist of allowed commands.  Note: ignores parameters, so `./clconvolve` and `./clconvolve numtrain=128` will both be allowed by this example |
+| WHITELIST='ls pwd groups ./gpuinfo ./clconvolve1' | Create whitelist of allowed commands.  Note: ignores parameters, so `./clconvolve1` and `./clconvolve1 numtrain=128` will both be allowed by this example |
 
 ## What if I run a task while another is already running?
 
