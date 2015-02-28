@@ -140,7 +140,7 @@ Well, in http, everything you transmit is transmitted in clear, and so you're su
 
 # What libraries does it use?
 
-* nodejs (more a platform than a library I suppose?)
+* nodejs
 * express
 * angular
 * jquery
