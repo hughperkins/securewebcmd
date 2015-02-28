@@ -70,30 +70,35 @@ var app = angular.module('mainapp', [] );
 var intervalId = null;
 app.controller( 'maincontroller', function( $scope, $http ) {
     $scope.myiframedisplay = 'none';
-    $scope.refreshJobs = function() {
-        var data = { 'checkpass': hashPassword( $scope.password ) };
-        $http.post('/jobs', data ).success( function( data ) {
-            console.log( data.result );
-            if( data.result == 'success' ) {
-                console.log('hide login modal...');
-                $('#loginmodal').modal('hide');
-            } else {
-                alert('Password was not recognized.');
-                return;
-            }
-            var jobs = data.jobs;
-            for( var i in jobs ) {
-                if( typeof jobs[i].args != 'undefined' ) {
-                    jobs[i].joinedargs = jobs[i].args.join(' ');
-                } else {
-                    jobs[i].joinedargs = '';
-                }
-            }
-            $scope.jobs = jobs;
-            if( data.showiframe == 'yes' ) {
+    $scope.getConfig = function() {
+        $http.defaults.headers.common['Auth-Token'] = hashPassword( $scope.password );
+        $http.get('/api/config' ).success( function( config ) {
+            if( config.showiframe == 'yes' ) {
                 $scope.myiframedisplay = 'block';
             } else {
                 $scope.myiframedisplay = 'none';
+            }
+        }).error( function( data ) {
+            console.log('failed to get config', data );
+            //alert('Server not available, or password was not recognized.');
+        });
+    }
+    $scope.refreshJobs = function() {
+        $http.defaults.headers.common['Auth-Token'] = hashPassword( $scope.password );
+        $http.get('/api/jobs' ).success( function( jobs, status, headers ) {
+            console.log('status', status );
+            console.log('headers', headers() );
+            console.log('hide login modal...');
+            $('#loginmodal').modal('hide');
+            $scope.jobs = jobs;
+        }).error( function( data, status, headers ) {
+            console.log('failed to get jobs', data );
+            console.log('status', status );
+            console.log('headers', headers() );
+            if( status == 401 ) {
+                alert('Password was not recognized.');
+            } else {
+                alert('Server not available.');
             }
         });
     }
@@ -107,19 +112,20 @@ app.controller( 'maincontroller', function( $scope, $http ) {
         var checksum = md5( stringToCheck );
         console.log(checksum);
 
-        var data = { 'dir': $scope.dir, 'cmd': $scope.cmd, 'check': checksum };
-        console.log('submitting:', data );
-        $http.post('/run2', data ).success( function( data ) {
-            var job = data;
-            console.log(job);
-            if( typeof job.args != 'undefined' ) {
-                job.joinedargs = job.args.join(' ');
-            } else {
-                job.joinedargs = '';
-            }
+        $http.defaults.headers.common['Auth-Token'] = checksum;
+        var job = { 'dir': $scope.dir, 'cmd': $scope.cmd };
+        console.log('submitting:', job );
+        $http.post('/api/jobs', job ).success( function( job, status, headers ) {
+            console.log('jobs post result', job );
+            console.log('status', status );
+            console.log('headers', headers() );
             $scope.jobs.push(job);
             $scope.tail( job );
             console.log('finished calling run2');
+        }).error( function( data, status, headers ) {
+            console.log('failed to post job', data );
+            //alert('Server not available, or password was not recognized.');
+            //return;
         });
     }
     $scope.tail = function( job ) {
@@ -127,25 +133,33 @@ app.controller( 'maincontroller', function( $scope, $http ) {
         $('#myiframe').contents().html('');
         $('#outputdiv').html('');
         console.log('tailing:', job );
-        $scope.modalresultstitle = job.cmd + ' ' + job.joinedargs
-        $('#myiframe').attr('src','/job?jobId=' + job.id + '&checkpass=' + hashPassword($scope.password) + '&nocompress=1' );
+        $scope.modalresultstitle = job.cmd
+        $('#myiframe').attr('src','/api/jobs/' + job.id + '/results?checkpass=' + hashPassword($scope.password) + '&nocompress=1' );
         $('#resultsmodal').modal('show');
     }
     $scope.copyArgs = function( job ) {
         console.log( 'copyargs ', job );
         $scope.dir = job.dir;
-        $scope.cmd = job.cmd + ' ' + job.joinedargs; 
+        $scope.cmd = job.cmd; 
     }
     $scope.remove = function( job ) {
-        $http.post('/remove', { 'checkpass': hashPassword($scope.password), 'id': job.id } ).success( function( data ) {
+        $http.defaults.headers.common['Auth-Token'] = hashPassword($scope.password);
+        $http.delete('/api/jobs/' + job.id ).success( function( data ) {
             var index = getJobIndex( $scope.jobs, job.id );
             $scope.jobs.splice( index, 1 );
+            console.log('delete succeed ', data);
+        }).error( function( data ) {
+            console.log('delete fail ', data);
         });
     }
     $scope.kill = function( job ) {
-        $http.post('/kill', { 'checkpass': hashPassword($scope.password), 'id': job.id } ).success( function( data ) {
+        $http.defaults.headers.common['Auth-Token'] = hashPassword($scope.password);
+        $http.put('/api/jobs/' + job.id, { 'state': 'done' } ).success( function( data ) {
+            console.log('kill success');
             job.done = true;
             job.state = 'done';
+        }).error( function( data ) {
+            console.log('kill fail ', data);
         });
     }
     $scope.refreshOutput = function() {
@@ -175,6 +189,7 @@ app.controller( 'maincontroller', function( $scope, $http ) {
     };
     $scope.doLogin = function() {
         console.log('$scope.doLogin()');
+        $scope.getConfig();
         $scope.refreshJobs();
     }
     $('#myiframe').load( function( event ) {

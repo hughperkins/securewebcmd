@@ -92,6 +92,15 @@ function requestToDic( request ) {
     return result;
 }
 
+function filterObject( item, properties ) {
+    var newItem = {};
+    for( var j = 0; j < properties.length; j++ ) {
+        var prop = properties[j];
+        newItem[prop] = item[prop];
+    }
+    return newItem;
+}
+
 function listToFilteredList( list, properties ) {
     var filteredList = [];
     var keys = Object.keys( list );
@@ -169,22 +178,23 @@ function runEvent( list, eventArg ) {
 function startJob( job ) {
     currentJob = job;
     job.state = 'running';
-    var dir = job.dir;
-    var cmd1 = job.cmd;
-    var args = job.args;
+//    var dir = job.dir;
+//    var cmd1 = job.cmd1;
+//    var args = job.args;
     options = {cwd: job.dir }
 
-    console.log('cmd1: [' + cmd1 + ']');
-    console.log('args: [' + args + '] length: ' + args.length );
-    console.log('dir: [' + dir + ']' );
+    console.log('exe: [' + job.exe + ']');
+    console.log('args: [' + job.args + '] length: ' + job.args.length );
+    console.log('dir: [' + job.dir + ']' );
 
     if( whitelist.length > 0 ) {
-        if( whitelist.indexOf( cmd1 ) < 0 ) {
+        if( whitelist.indexOf( job.exe ) < 0 ) {
+            console.log('job not in whitelist, cmd ', job.exe );
             job.done = true;
             job.state = 'done';
             job.results = 'requested command not in whitelist\n';
             job.results += 'whitelisted commands: ' + whitelist + '\n';
-            job.results += 'you requested to run command (ignoring arguments): ' + cmd1 + '\n';
+            job.results += 'you requested to run command (ignoring arguments): ' + job.exe + '\n';
             runEvent( job.ondata, job.results );
             runEvent( job.onclose, -1 );
             jobFinished( job );
@@ -196,11 +206,11 @@ function startJob( job ) {
     console.log('Starting job', job);
 
     if( job.args.length > 0 ) {
-        console.log('has args: ' + args + '<br />');
-        var cmdobj = spawn( cmd1, args, options );
+        console.log('has args: ' + job.args + '<br />');
+        var cmdobj = spawn( job.exe, job.args, options );
     } else {
         console.log('no args<br/>');
-        var cmdobj = spawn( cmd1, options );
+        var cmdobj = spawn( job.exe, options );
     }
     job.cmdobj = cmdobj;
 
@@ -229,56 +239,55 @@ function startJob( job ) {
     });
 }
 
-function run2( request, response ) {
-    response.writeHead(200, {'Content-type': 'application/json; charset=utf-8;' });
-    var cmd = request.query2.cmd;
-    var dir = request.query2.dir;
-    if( auth ) {
-        var theirCheck = request.query2.check;
-        var stringToCheck = password + '||' + dir + '||' + cmd;
-        var ourCheck = md5.md5( stringToCheck );
-        if( theirCheck != ourCheck ) {
-            response.end(JSON.stringify({'result': 'fail', 'error': 'checksum error' } ) );
-            return;
-        }
-    }
-//            response.end();
-    var splitcmd = cmd.split(' ' );
-    var cmd1 = splitcmd[0].trim();
-    var args = [];
-    if( splitcmd.length > 1 ) {
-        args = splitcmd.slice(1);
-    }
-    job = { 'cmd': cmd1, 'args': args, 'state': 'waiting', 'done': false, 'results': '', 'dir': dir };
-    job.ondata = [];
-    job.onclose = [];
-//            job.onexit = [];
-    job.dir = dir;
-    if( jobs.length > 0 ) {
-        job.id = jobs[ jobs.length - 1].id + 1;
-    } else {
-        job.id = 1;
-    }
-    jobs[ jobs.length ] = job;
-    console.log('request received for new job:', job );
+//function run2( request, response ) {
+//    response.writeHead(200, {'Content-type': 'application/json; charset=utf-8;' });
+//    var cmd = request.query2.cmd;
+//    var dir = request.query2.dir;
+//    if( auth ) {
+//        var theirCheck = request.query2.check;
+//        var stringToCheck = password + '||' + dir + '||' + cmd;
+//        var ourCheck = md5.md5( stringToCheck );
+//        if( theirCheck != ourCheck ) {
+//            response.end(JSON.stringify({'result': 'fail', 'error': 'checksum error' } ) );
+//            return;
+//        }
+//    }
+////            response.end();
+//    var splitcmd = cmd.split(' ' );
+//    var cmd1 = splitcmd[0].trim();
+//    var args = [];
+//    if( splitcmd.length > 1 ) {
+//        args = splitcmd.slice(1);
+//    }
+//    job = { 'cmd': cmd1, 'args': args, 'state': 'waiting', 'done': false, 'results': '', 'dir': dir };
+//    job.ondata = [];
+//    job.onclose = [];
+////            job.onexit = [];
+//    job.dir = dir;
+//    if( jobs.length > 0 ) {
+//        job.id = jobs[ jobs.length - 1].id + 1;
+//    } else {
+//        job.id = 1;
+//    }
+//    jobs[ jobs.length ] = job;
+//    console.log('request received for new job:', job );
 
-    if( currentJob == null ) {
-        startJob( job );
-    } else {
-        queuedJobs[ queuedJobs.length ] = job;
-        job.state = 'queued';
-    }
+//    if( currentJob == null ) {
+//        startJob( job );
+//    } else {
+//        queuedJobs[ queuedJobs.length ] = job;
+//        job.state = 'queued';
+//    }
 
-    var results = { 'id': job.id , 'result': 'success', 'cmd': job.cmd, 'args': job.args, 'done': job.done, 'state': job.state, 'dir': job.dir };
-//    console.log('results:', results );
-//    console.log('finished run2 method');
-    response.end(JSON.stringify(results) );
-}
+//    var results = { 'id': job.id , 'result': 'success', 'cmd': job.cmd, 'args': job.args, 'done': job.done, 'state': job.state, 'dir': job.dir };
+////    console.log('results:', results );
+////    console.log('finished run2 method');
+//}
 
 function getJob( request, response ) {
     // sameorigin option means we can display it in iframe with no security issues
     response.writeHead(200, {'Content-type': 'text/plain; charset=utf-8', 'x-frame-options': 'SAMEORIGIN' });
-    var jobId = request.query2.jobId;
+    var jobId = request.params.id; // request.query2.jobId;
 //    console.log('requested jobid: ' + jobId );
     var index = getJobIndex( jobId );
     var job = jobs[index];
@@ -322,34 +331,6 @@ function getJob( request, response ) {
 //    console.log('finished job method');
 }
 
-function getJobs( request, response ) {
-    response.writeHead(200, {'Content-type': 'application/json; charset=utf-8' } );
-    response.end( JSON.stringify( { 'showiframe': showIframe, 'result': 'success', 'jobs': listToFilteredList( jobs, ['done','cmd','id','state','args', 'dir'] ) } ) );
-}
-
-function kill( request, response ) {
-    response.writeHead(200, {'Content-type': 'application/json; charset=utf-8' } );
-    var id = request.query2.id;
-    var index = getJobIndex( id );
-//    console.log('killing id: ' + id );
-    var job = jobs[index];
-//    console.log('killing job', job );
-    job.cmdobj.kill();
-    var result = {'result': 'success'};
-    response.end( JSON.stringify( result ) );
-}
-
-function remove( request, response ) {
-    response.writeHead(200, {'Content-type': 'application/json; charset=utf-8' } );
-    var id = request.query2.id;
-    var index = getJobIndex( id );
-//    console.log('Removing job', jobs[index] );
-    jobs.splice(index,1);
-    writeJobs();
-    var result = {'result': 'success'};
-    response.end( JSON.stringify( result ) );
-}
-
 function shouldCompress(req, res) {
 //    console.log( req.query2 );
     if (req.headers['x-no-compression'] ) {
@@ -383,7 +364,50 @@ app.use( function( request, response, next ) { // then we can always use req.que
     request.query2 = requestToDic( request );
     next();
 });
-app.use('/run2', run2 );
+app.post('/api/jobs', function( req,res ) {
+    var job = req.body;
+    console.log('post for ', job );
+    if( auth ) {
+        var theirCheck = req.headers['auth-token'];
+        var stringToCheck = password + '||' + job.dir + '||' + job.cmd;
+        var ourCheck = md5.md5( stringToCheck );
+        if( theirCheck != ourCheck ) {
+            console.log('failed auth');
+            res.writeHead('403');
+            res.end();
+            return;
+        }
+    }
+    var splitcmd = job.cmd.split(' ' );
+    job.exe = splitcmd[0].trim();
+    job.args = [];
+    if( splitcmd.length > 1 ) {
+        job.args = splitcmd.slice(1);
+    }
+    job.state = 'waiting';
+    job.done = false;
+    job.results = '';
+    job.ondata = [];
+    job.onclose = [];
+    if( jobs.length > 0 ) {
+        job.id = jobs[ jobs.length - 1].id + 1;
+    } else {
+        job.id = 1;
+    }
+    jobs[ jobs.length ] = job;
+    console.log('request received for new job:', job );
+
+    if( currentJob == null ) {
+        startJob( job );
+    } else {
+        queuedJobs[ queuedJobs.length ] = job;
+        job.state = 'queued';
+    }
+    res.writeHead( 201, { 'Content-type': 'application/json; charset: utf-8;',
+        'Location': '/api/jobs/' + job.id } );
+    res.end(JSON.stringify(filterObject( job, 
+        ['id','result', 'args', 'done', 'state', 'dir', 'exe', 'cmd' ] ) ) );
+});
 app.use( function( request, response, next ) {
     if( !auth ) {
         next();
@@ -392,17 +416,78 @@ app.use( function( request, response, next ) {
     // add filter for password
     console.log( request.path );
     var checkpass = request.query2.checkpass;
+    if( 'auth-token' in request.headers ) {
+        checkpass = request.headers['auth-token'];
+    }
     if( typeof checkpass == 'undefined' || !checkPass( checkpass ) ) {
-        response.writeHead(200, {'Content-type': 'application/json; charset=utf-8' } );
-        response.end(JSON.stringify( { 'result': 'fail', 'error': 'checksum mismatch, check password' }, 0, 4 ) );
+        response.writeHead( 401 );
+        response.end();
         return;
     }
     next();
 });
-app.use('/job', getJob );
-app.use('/kill', kill );
-app.use('/remove', remove );
-app.use('/jobs', getJobs );
+function illegalRequest( description, res ) {
+    console.log( description );
+    res.writeHead( 400 );
+    res.end();
+}
+app.get('/api/jobs/:id/results', getJob );
+app.put('/api/jobs/:id', function( req, res ) {
+    var keys = Object.keys( req.body );
+    if( keys.length != 1 ) {
+        illegalRequest( 'cant modify multiple state values', res );
+        return;
+    }
+    var key = keys[0];
+    if( key != 'state' ) {
+        illegalRequest( 'can only modify state value', res );
+        return;
+    }
+    var value = req.body[key];
+    if( value != 'done' ) {
+        illegalRequest( 'can only set state to done', res );
+        return;
+    }
+    var index = getJobIndex( id );
+    if( index == -1 ) {
+        console.log('not found');
+        res.writeHead( 404 );
+        res.end();
+    } else {
+        var job = jobs[index];
+        console.log('killing job ' + job.id );
+        job.cmdobj.kill();
+        res.writeHead(200);
+        res.end();
+    }
+} );
+app.delete('/api/jobs/:id', function( req, res ) {
+    var id = req.params.id;
+    console.log('removing id: ' + id );
+    var index = getJobIndex( id );
+    if( index == -1 ) {
+        console.log('not found');
+        response.writeHead( 404 );
+        response.end();
+    } else {
+        var job = jobs[index];
+        if( job.state == 'running' ) {
+            illegalRequest('cant remove a job that is running');
+            return;
+        }
+        jobs.splice( index, 1 );
+        res.writeHead(200);
+        res.end();
+    }
+} );
+app.get('/api/config', function( req, res ) {
+    res.writeHead(200, {'Content-type': 'application/json; charset=utf-8' } );
+    res.end( JSON.stringify( { 'showiframe': showIframe } ) );
+});
+app.get('/api/jobs', function( req, res ) {
+    res.writeHead(200, {'Content-type': 'application/json; charset=utf-8' } );
+    res.end( JSON.stringify( listToFilteredList( jobs, ['done','cmd','id','state','args', 'dir'] ) ) );
+});
 
 var isSsl = false;
 
