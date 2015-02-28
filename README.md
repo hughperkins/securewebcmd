@@ -10,15 +10,14 @@
     - [How to set options](#how-to-set-options)
     - [Available options](#available-options)
   - [What if I run a task while another is already running?](#what-if-i-run-a-task-while-another-is-already-running)
+  - [Activate https](#activate-https)
 - [Security](#security)
   - [How is it secured?](#how-is-it-secured)
     - [In https mode?](#in-https-mode)
     - [In http mode?](#in-http-mode)
   - [Is my data encrypted during transport, in either direction?](#is-my-data-encrypted-during-transport-in-either-direction)
   - [Is it secure from a man-in-middle attack?](#is-it-secure-from-a-man-in-middle-attack)
-  - [Can I use https?](#can-i-use-https)
   - [If I use https, can people do a man-in-the middle attack etc?](#if-i-use-https-can-people-do-a-man-in-the-middle-attack-etc)
-  - [Why don't I just not use https, and stick with the md5 hash?](#why-dont-i-just-not-use-https-and-stick-with-the-md5-hash)
 - [What libraries does it use?](#what-libraries-does-it-use)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -93,6 +92,20 @@ WHITELIST='ls pwd ./gpuinfo' securewebcmd
 * it will be queued
 * it will start once the running task finishes, or you kill the currently running task
 
+## Activate https
+
+From the directory where you want to run securewebcmd, do:
+```bash
+openssl genrsa -out key.pem
+#(note: just hit return several times, to accept the defaults)
+openssl req -new -key key.pem -out csr.pem
+openssl x509 -req -days 9999 -in csr.pem -signkey key.pem -out cert.pem
+rm csr.pem
+```
+... then restart the securewebcmd nodejs server
+... and connect to [https://localhost:8888](https://localhost:8888), instead of [http://localhost:8888](http://localhost:8888)
+* since it is using a self-signed certificate, you will need to accept the warnings that appear
+
 # Security
 
 ## How is it secured?
@@ -106,8 +119,8 @@ WHITELIST='ls pwd ./gpuinfo' securewebcmd
 * so, it would be challenging for someone to run arbitrary commands against the server
 * however, in http mode, if someone can sniff the traffic they can:
   * do replay attacks, ie run the same commands over and over again
-    * this includes sending requests for viewing arbitrary results
-  * read all the traffic (except the password, which is never directly transmitted, just used to send a salted hash)
+    * this includes sending viewing any results in the history
+  * read all the traffic (except the password)
 
 ## Is my data encrypted during transport, in either direction?
 
@@ -117,26 +130,9 @@ Yes, if you use https.  No, if you don't.
 
 Yes, if you use https, and have some way of validating the certificate from the browser side. Otherwise, not.
 
-## Can I use https?
-
-Yes.  From the directory where you want to run securewebcmd, do:
-```bash
-openssl genrsa -out key.pem   (note: just hit return several times, to accept the defaults)
-openssl req -new -key key.pem -out csr.pem
-openssl x509 -req -days 9999 -in csr.pem -signkey key.pem -out cert.pem
-rm csr.pem
-```
-... then restart the securewebcmd nodejs server
-... and connect to [https://localhost:8888](https://localhost:8888), instead of [http://localhost:8888](http://localhost:8888)
-* since it is using a self-signed certificate, you will need to accept the warnings that appear
-
 ## If I use https, can people do a man-in-the middle attack etc?
 
 If you have some way of ensuring that the certificate you see from the browser is the one that the server is using, then tricky.  Otherwise, yes.
-
-## Why don't I just not use https, and stick with the md5 hash?
-
-Well, in http, everything you transmit is transmitted in clear, and so you're susceptible to replay attacks and so on.  In https, traffic is not easily readable, providing protection against passive attacks.
 
 # What libraries does it use?
 
