@@ -7,6 +7,7 @@
   - [Install](#install)
   - [Run](#run)
     - [What if I launch a task while another is already running?](#what-if-i-launch-a-task-while-another-is-already-running)
+  - [Supported platforms](#supported-platforms)
   - [server-side options](#server-side-options)
     - [How to set options](#how-to-set-options)
     - [Available options](#available-options)
@@ -19,6 +20,8 @@
   - [Is it secure from a man-in-middle attack?](#is-it-secure-from-a-man-in-middle-attack)
   - [If I use https, can people do a man-in-the middle attack etc?](#if-i-use-https-can-people-do-a-man-in-the-middle-attack-etc)
 - [What libraries/platforms does it use?](#what-librariesplatforms-does-it-use)
+  - [Main libraries/platforms](#main-librariesplatforms)
+  - [Other dependencies](#other-dependencies)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -75,6 +78,12 @@ securewebcmd
 
 * it will be queued
 * it will start once the running task finishes, or if you kill the currently running task
+
+## Supported platforms
+
+* tested on Ubuntu 14.04, using Firefox 35
+* website should plausibly be viewable with Chrome and Firefox, on any platform, and possibly IE9 or newer
+* server should probably run anywhere that nodejs will run?
 
 ## server-side options
 
@@ -136,9 +145,15 @@ If you have some way of ensuring that the certificate you see from the browser i
 
 # What libraries/platforms does it use?
 
+## Main libraries/platforms
+
 * [nodejs](http://nodejs.org/)
 * [express](http://expressjs.com/)
 * [angular](https://angularjs.org/)
 * [jquery](http://jquery.com/)
 * [bootstrap](http://getbootstrap.com/)
+
+## Other dependencies
+
+* Please view [package.json](package.json)
 
