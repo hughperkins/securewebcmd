@@ -80,7 +80,7 @@ securewebcmd
 
 ## Supported platforms
 
-* tested on Ubuntu 14.04, using Firefox 35
+* tested on Ubuntu 14.04 64-bit, using Firefox 35, and [node v0.12.0](http://nodejs.org/dist/v0.12.0/node-v0.12.0-linux-x64.tar.gz)
 * website should plausibly be viewable with Chrome and Firefox, on any platform, and possibly IE9 or newer
 * server should probably run anywhere that nodejs will run?
 
