@@ -400,10 +400,10 @@ app.use('/jobs', getJobs );
 var isSsl = false;
 
 function startServer() {
-    if( fs.existsSync( __dirname + '/key.pem' ) && fs.existsSync( __dirname + '/cert.pem' ) ) {
+    if( fs.existsSync( 'key.pem' ) && fs.existsSync( 'cert.pem' ) ) {
         var options = {
-            key: fs.readFileSync( __dirname + '/key.pem' ),
-            cert: fs.readFileSync( __dirname + '/cert.pem' )
+            key: fs.readFileSync( 'key.pem' ),
+            cert: fs.readFileSync( 'cert.pem' )
         };
         isSsl = true;
         https.createServer( options, function(request, response) {

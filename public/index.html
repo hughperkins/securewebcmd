@@ -177,27 +177,21 @@ app.controller( 'maincontroller', function( $scope, $http ) {
     <br />
     <br />
     <form class="form-horizontal">
-<!--        <div class="form-group">-->
-<!--            <label for="password" class="control-label col-xs-2">Password</label> -->
-<!--            <div class="col-xs-10">-->
-<!--             <input type="password" ng-model="password" class="form-control" placeholder="password" id="password" />-->
-<!--            </div>-->
-<!--        </div>-->
         <div class="form-group">
             <label class="control-label col-xs-2">Directory</label>
             <div class="col-xs-10">
-                <input type="text" ng-model="dir" class="form-control col-xs-10" name="dir" placeholder="working directory" id="dir" placeholder="working directory" />
+                <input type="text" ng-model="dir" class="form-control col-xs-10" placeholder="working directory (can leave blank)" />
             </div>
         </div>
         <div class="form-group">
             <label class="control-label col-xs-2">Cmd</label>
             <div class=" col-xs-10">
-                <input type="text" ng-model="cmd" class="form-control" name="cmd" placeholder="command to run" id="cmd" value="" />
+                <input type="text" ng-model="cmd" class="form-control" placeholder="command to run" id="cmd" value="" />
             </div>
         </div>
         <div class="form-group">
             <div class="col-xs-2 col-xs-offset-2">
-                <button class="btn btn-primary" ng-click="launch()" id="go">Launch <span class="glyphicon glyphicon-play" /></button>
+                <button class="btn btn-primary" ng-click="launch()">Launch <span class="glyphicon glyphicon-play" /></button>
             </div>
         </div>
     </form>

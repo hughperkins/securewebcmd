@@ -24,17 +24,22 @@ Functions:
 
 ![screenshot2](screenshots/securewebcmd2.png)
 
-# How to use
+# How to install
 
 ```bash
 npm install -g securewebcmd
+
+# How to use
+
+From any directory, do:
+```bash
 securewebcmd
 ```
 ... then type in a password of your choice twice
 
 * Connect to the server from a webbrowser, at port 8888, ie [localhost://http:8888](http://localhost:8888)
 * Type in the password, same as the one you entered at the server, and 'Login'
-* Type in a working directory, a command, and click 'Launch'
+* Type in a command, which will run in the same directory where you started securewebcmd, and click 'Launch'
 * the command should run, on the server, and the results appear in real-time
 * you can kill the job by clicking 'kill' button next to the running job, in the 'History' section
 * you can view the results for any job, current or past, by clicking the 'Results' button, next to the job, in the 'History' section
@@ -68,7 +73,7 @@ Yes, if you use https, and have some way of validating the certificate from the 
 
 # Can I use https?
 
-Yes.  From inside the `securewebcmd` directory, do:
+Yes.  From the directory where you want to run securewebcmd, do:
 ```bash
 openssl genrsa -out key.pem   (note: just hit return several times, to accept the defaults)
 openssl req -new -key key.pem -out csr.pem
