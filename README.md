@@ -5,6 +5,21 @@
 - [securewebcmd](#securewebcmd)
 - [Using](#using)
   - [Install](#install)
+  - [Run](#run)
+  - [server-side options](#server-side-options)
+    - [How to use options](#how-to-use-options)
+    - [Available options](#available-options)
+  - [What if I run a task while another is already running?](#what-if-i-run-a-task-while-another-is-already-running)
+- [Security](#security)
+  - [How is it secured?](#how-is-it-secured)
+    - [In https mode:](#in-https-mode)
+    - [In http mode:](#in-http-mode)
+  - [Is my data encrypted during transport, in either direction?](#is-my-data-encrypted-during-transport-in-either-direction)
+  - [Is it secure from a man-in-middle attack?](#is-it-secure-from-a-man-in-middle-attack)
+  - [Can I use https?](#can-i-use-https)
+  - [If I use https, can people do a man-in-the middle attack etc?](#if-i-use-https-can-people-do-a-man-in-the-middle-attack-etc)
+  - [Why don't I just not use https, and stick with the md5 hash?](#why-dont-i-just-not-use-https-and-stick-with-the-md5-hash)
+- [What libraries does it use?](#what-libraries-does-it-use)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -40,6 +55,7 @@ Functions:
 
 ```bash
 npm install -g securewebcmd
+```
 
 ## Run
 
