@@ -136,9 +136,9 @@ If you have some way of ensuring that the certificate you see from the browser i
 
 # What libraries/platforms does it use?
 
-* nodejs
-* express
-* angular
-* jquery
-* bootstrap
+* [nodejs](http://nodejs.org/)
+* [express](http://expressjs.com/)
+* [angular](https://angularjs.org/)
+* [jquery](http://jquery.com/)
+* [bootstrap](http://getbootstrap.com/)
 
