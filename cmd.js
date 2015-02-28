@@ -23,14 +23,14 @@ var angularpath = path.dirname( require.resolve('angular' ) );
 var bootstrappath = path.dirname( path.dirname( require.resolve( 'bootstrap' ) ) );
 
 auth = true; // should be true for prod...
+if( process.env.NOAUTH == 1 ) {
+    auth = false;
+    console.log('WARNING: disabled authorization.  unset NOAUTH, and restart, to enable');
+}
 
-//var nextJob = 0;
 var jobs = [];
 var currentJob = null;
 var queuedJobs = [];
-
-//var inProgress = {};
-//var nextProgressIndex = 0;
 
 var schema = {
     properties: {
@@ -64,13 +64,10 @@ if( fs.existsSync( __dirname + '/jobs.json' ) ) {
 }
 
 function checkPass( checkpass ) {
-//    console.log('checkpass( ' + checkpass + ' )');
     var splitcheckpass = checkpass.split('|');
     var salt = splitcheckpass[0];
     var checksum = splitcheckpass[1];
     var ourchecksum = md5.md5( salt + '|' + password );
-//    console.log( 'ourchecksum: ' + ourchecksum );
-//    console.log( 'theirchecksum: ' + checkpass );
     return ourchecksum == checksum;
 }
 
@@ -163,6 +160,10 @@ function startJob( job ) {
     var args = job.args;
     options = {cwd: job.dir }
 
+    console.log('cmd1: [' + cmd1 + ']');
+    console.log('args: [' + args + '] length: ' + args.length );
+    console.log('dir: [' + dir + ']' );
+
     console.log('Starting job', job);
 
     if( job.args.length > 0 ) {
@@ -200,20 +201,13 @@ function startJob( job ) {
 }
 
 function run2( request, response ) {
-//    console.log('request for /run2');
     response.writeHead(200, {'Content-type': 'application/json; charset=utf-8;' });
-//    console.log('request.body:', request.body );
     var cmd = request.query2.cmd;
     var dir = request.query2.dir;
     if( auth ) {
         var theirCheck = request.query2.check;
-//        console.log('cmd: ' + cmd );
-//        console.log('dir: ' + dir );
         var stringToCheck = password + '||' + dir + '||' + cmd;
-//        console.log('stringToCheck: [' + stringToCheck + ']' );
         var ourCheck = md5.md5( stringToCheck );
-//        console.log('their check: ' + theirCheck );
-//        console.log('our check: ' + ourCheck );
         if( theirCheck != ourCheck ) {
             response.end(JSON.stringify({'result': 'fail', 'error': 'checksum error' } ) );
             return;
@@ -221,13 +215,11 @@ function run2( request, response ) {
     }
 //            response.end();
     var splitcmd = cmd.split(' ' );
-    var cmd1 = splitcmd[0];
+    var cmd1 = splitcmd[0].trim();
     var args = [];
     if( splitcmd.length > 1 ) {
         args = splitcmd.slice(1);
     }
-//    console.log('cmd1: ' + cmd + '<br />\n' );
-//    console.log('cmd1: ' + cmd1 );
     job = { 'cmd': cmd1, 'args': args, 'state': 'waiting', 'done': false, 'results': '', 'dir': dir };
     job.ondata = [];
     job.onclose = [];
@@ -239,7 +231,6 @@ function run2( request, response ) {
         job.id = 1;
     }
     jobs[ jobs.length ] = job;
-//    job.id = jobs.length - 1;
     console.log('request received for new job:', job );
 
     if( currentJob == null ) {
@@ -345,15 +336,6 @@ function shouldCompress(req, res) {
 }
 
 var app = express();
-//var router = express.Router();
-
-//app.use( function( request, response, next ) {
-//    console.log( 'url: ' + request.url );
-//    if( request.url == '/' ) {
-//        request.url = '/gzip/index.html';
-//    }
-//    next();
-//});
 
 app.use(compression({filter: shouldCompress}));
 app.use( bodyParser.json() ); // note: angular uses json, jquery uses urlencoded
@@ -380,22 +362,18 @@ app.use( function( request, response, next ) {
     }
     // add filter for password
     console.log( request.path );
-//    console.log( 'request.body: ', request.body );
     var checkpass = request.query2.checkpass;
-//    console.log('checkpass: ' + checkpass );
     if( typeof checkpass == 'undefined' || !checkPass( checkpass ) ) {
         response.writeHead(200, {'Content-type': 'application/json; charset=utf-8' } );
         response.end(JSON.stringify( { 'result': 'fail', 'error': 'checksum mismatch, check password' }, 0, 4 ) );
         return;
     }
-//    console.log('pass ok :-)' );
     next();
 });
 app.use('/job', getJob );
 app.use('/kill', kill );
 app.use('/remove', remove );
 app.use('/jobs', getJobs );
-//app.use( '/', dynamicRouter );
 
 var isSsl = false;
 
@@ -427,10 +405,5 @@ function startServer() {
         console.log('key.pem and cert.pem not detected: started using http protocol, use http:// to connect, port 8888');
     }
 }
-
-//setInterval( function() {
-//    console.log( inProgress );
-//}, 1000 );
-
 
 

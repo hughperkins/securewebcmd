@@ -45,6 +45,20 @@ var oldText = '';
 
 $( function() {
     $('#loginmodal').modal({'show': true, 'keyboard': false });
+    $('#loginmodal').on('shown.bs.modal', function(e) {
+        $('#passwordinput').focus();
+    });
+    $('#loginmodal').on('hidden.bs.modal', function(e) {
+        $('#cmdinput').focus();
+    });
+    $('#resultsmodal').on('hidden.bs.modal', function(e) {
+        $('#cmdinput').focus();
+    });
+    $('#cmdinput').keyup( function(e) {
+        if( e.keyCode == 27 ) {
+            $('#cmdinput').val('');
+        }
+    });
 });
 
 var app = angular.module('mainapp', [] );
@@ -186,7 +200,7 @@ app.controller( 'maincontroller', function( $scope, $http ) {
         <div class="form-group">
             <label class="control-label col-xs-2">Cmd</label>
             <div class=" col-xs-10">
-                <input type="text" ng-model="cmd" class="form-control" placeholder="command to run" id="cmd" value="" />
+                <input type="text" ng-model="cmd" id="cmdinput" class="form-control" placeholder="command to run" id="cmd" value="" />
             </div>
         </div>
         <div class="form-group">
@@ -198,7 +212,7 @@ app.controller( 'maincontroller', function( $scope, $http ) {
     <br />
     <h1>History</h1>
     <br />
-    <button class="btn btn-default" ng-click="refreshJobs()">Refresh <span class="glyphicon glyphicon-refresh" ></span></button><br />
+    <button type="button" class="btn btn-default" ng-click="refreshJobs()">Refresh <span class="glyphicon glyphicon-refresh" ></span></button><br />
     <br />
     <div id="jobs">
         <table class="table">
@@ -207,14 +221,15 @@ app.controller( 'maincontroller', function( $scope, $http ) {
             <td>{{job.id}}</td>
             <td>{{job.cmd}} {{job.joinedargs}}</td>
             <td>{{job.state}}</td>
-            <td><button class="btn btn-default" ng-click="tail( job )">Results <span class="glyphicon glyphicon-envelope" ></span></button>
-            <button class="btn btn-default" ng-click="copyArgs( job )">Re-use <span class="glyphicon glyphicon-edit" ></span></button>
-            <button class="btn btn-danger" ng-click="kill( job )" ng-hide="job.done == true">Kill <span class="glyphicon glyphicon-stop" ></span></button>
-            <button class="btn btn-danger" ng-click="remove( job )" ng-hide="job.done != true">Remove <span class="glyphicon glyphicon-trash" ></span></button>
+            <td><button type="button" class="btn btn-default" ng-click="tail( job )">Results <span class="glyphicon glyphicon-envelope" ></span></button>
+            <button type="button" class="btn btn-default" ng-click="copyArgs( job )">Copy cmd <span class="glyphicon glyphicon-edit" ></span></button>
+            <button type="button" class="btn btn-danger" ng-click="kill( job )" ng-hide="job.done == true">Kill <span class="glyphicon glyphicon-stop" ></span></button>
+            <button type="button" class="btn btn-danger" ng-click="remove( job )" ng-hide="job.done != true">Remove <span class="glyphicon glyphicon-trash" ></span></button>
         </tr>
         </table>
     </div>
 
+                    <form class="form-horizontal">
     <div class="modal fade" id="loginmodal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -223,25 +238,25 @@ app.controller( 'maincontroller', function( $scope, $http ) {
                     <h4 class="modal-title" id="loginModalLabel">Secure Web Command Login</h4>
                 </div>
                 <div class="modal-body" >
-                    <form class="form-horizontal">
                         <div class="form-group">
                             <label for="password" class="control-label col-xs-2">Password</label> 
                             <div class="col-xs-10">
-                                 <input type="password" ng-model="password" class="form-control" placeholder="password" />
+                                 <input type="password" id="passwordinput" ng-model="password" class="form-control" placeholder="password" />
                             </div>
                         </div>
-                    </form>
                 </div>
                 <div class="modal-footer">
-                    <button ng-click="doLogin()" class="btn btn-primary">Login</button>
+                    <button type="submit" ng-click="doLogin()" class="btn btn-primary">Login</button>
                 </div>
             </div>
         </div>
     </div>
+                    </form>
 
     <div class="modal fade" id="resultsmodal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
+            <form>
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                     <h4 class="modal-title" id="myModalLabel">Results for '{{modalresultstitle}}'</h4>
@@ -250,8 +265,9 @@ app.controller( 'maincontroller', function( $scope, $http ) {
                 ...
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" data-dismiss="modal">Close</button>
                 </div>
+            </form>
             </div>
         </div>
     </div>
