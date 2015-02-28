@@ -73,8 +73,8 @@ if( auth ) {
     startServer();
 }
             
-if( fs.existsSync( __dirname + '/jobs.json' ) ) {
-    jobs = JSON.parse(fs.readFileSync(__dirname + '/jobs.json', 'utf8'));
+if( fs.existsSync( 'jobs.json' ) ) {
+    jobs = JSON.parse(fs.readFileSync( 'jobs.json', 'utf8'));
 }
 
 function checkPass( checkpass ) {
@@ -141,11 +141,11 @@ function writeJobs() {
     jobsToWrite = filterList( jobsToWrite, 'state', 'queued' );
     setListAttr( jobsToWrite, 'done', true );
     setListAttr( jobsToWrite, 'state', 'done' );
-    fs.writeFileSync(__dirname + '/tempjobs.json', JSON.stringify(jobsToWrite), 'utf8' );
-    if( fs.existsSync(__dirname + '/jobs.json' ) ) {
-        //fs.unlinkSync(__dirname + '/jobs.json' );
+    fs.writeFileSync( 'tempjobs.json', JSON.stringify(jobsToWrite), 'utf8' );
+    if( fs.existsSync( 'jobs.json' ) ) {
+        //fs.unlinkSync( 'jobs.json' );
     }
-    fs.renameSync( __dirname + '/tempjobs.json', __dirname + '/jobs.json' );
+    fs.renameSync( 'tempjobs.json', 'jobs.json' );
 }
 
 function jobFinished( job ) {
