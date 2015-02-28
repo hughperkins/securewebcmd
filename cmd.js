@@ -33,6 +33,15 @@ if( process.env.SHOWIFRAME == 1 ) {
     showIframe = 'yes';
 }
 
+var whitelist = [];
+if( typeof process.env.WHITELIST != 'undefined' ) {
+    whitelist = process.env.WHITELIST.split(' ' );
+    console.log('whitelist activated, list: ' + whitelist );
+}
+
+var port = process.env.PORT || 8888;
+console.log('Using port: ' + port );
+
 var jobs = [];
 var currentJob = null;
 var queuedJobs = [];
@@ -168,6 +177,21 @@ function startJob( job ) {
     console.log('cmd1: [' + cmd1 + ']');
     console.log('args: [' + args + '] length: ' + args.length );
     console.log('dir: [' + dir + ']' );
+
+    if( whitelist.length > 0 ) {
+        if( whitelist.indexOf( cmd1 ) < 0 ) {
+            job.done = true;
+            job.state = 'done';
+            job.results = 'requested command not in whitelist\n';
+            job.results += 'whitelisted commands: ' + whitelist + '\n';
+            job.results += 'you requested to run command (ignoring arguments): ' + cmd1 + '\n';
+            runEvent( job.ondata, job.results );
+            runEvent( job.onclose, -1 );
+            jobFinished( job );
+            writeJobs();
+            return;
+        }
+    }
 
     console.log('Starting job', job);
 
@@ -396,8 +420,8 @@ function startServer() {
                 console.log('something went wrong:' + e );
                 response.end('something went wrong ' + e);
             }
-        } ).listen(8888);
-        console.log('key.pem and cert.pem detected: started using https protocol, use https:// to connect, port 8888');
+        } ).listen(port);
+        console.log('key.pem and cert.pem detected: started using https protocol, use https:// to connect, port ' + port );
     } else {
         http.createServer( function(request, response) {
             try {
@@ -406,8 +430,8 @@ function startServer() {
                 console.log('something went wrong:' + e );
                 response.end('something went wrong ' + e);
             }
-        } ).listen(8888);
-        console.log('key.pem and cert.pem not detected: started using http protocol, use http:// to connect, port 8888');
+        } ).listen(port);
+        console.log('key.pem and cert.pem not detected: started using http protocol, use http:// to connect, port ' + port );
     }
 }
 

@@ -1,3 +1,13 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [securewebcmd](#securewebcmd)
+- [Using](#using)
+  - [Install](#install)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # securewebcmd
 Execute commands on a linux server through a webpage. Secured using md5 hashing.
 
@@ -24,12 +34,14 @@ Functions:
 
 ![screenshot2](screenshots/securewebcmd2.png)
 
-# How to install
+# Using
+
+## Install
 
 ```bash
 npm install -g securewebcmd
 
-# How to use
+## Run
 
 From any directory, do:
 ```bash
@@ -44,18 +56,37 @@ securewebcmd
 * you can kill the job by clicking 'kill' button next to the running job, in the 'History' section
 * you can view the results for any job, current or past, by clicking the 'Results' button, next to the job, in the 'History' section
 
-# What if I run a task while another is already running?
+## server-side options
+
+### How to use options
+
+* server-side options are passed in as environment-variables, eg:
+```bash
+WHITELIST='ls pwd ./gpuinfo' securewebcmd
+```
+
+### Available options
+
+| Option | Description |
+|---------|-------------|
+| PORT=2000 | Change the port that securewebcmd listens on |
+| WHITELIST='ls pwd groups ./gpuinfo ./clconvolve1' | * Create whitelist of allowed commands
+* Ignores parameters, so `./clconvolve` and `./clconvolve numtrain=128` will both be allowed by this example |
+
+## What if I run a task while another is already running?
 
 * it will be queued
 * it will start once the running task finishes, or you kill the currently running task
 
-# How is it secured?
+# Security
 
-## In https mode:
+## How is it secured?
+
+### In https mode:
 * everything is encrypted, by virtue of using https
 * all commands, including viewing, and running things, are password-protected (but the password is never sent to the server, just used to create a salted hash)
 
-## In http mode:
+### In http mode:
 * all commands, including viewing, and running things, are password-protected, using password hashes
 * so, it would be challenging for someone to run arbitrary commands against the server
 * however, in http mode, if someone can sniff the traffic they can:
@@ -63,15 +94,15 @@ securewebcmd
     * this includes sending requests for viewing arbitrary results
   * read all the traffic (except the password, which is never directly transmitted, just used to send a salted hash)
 
-# Is my data encrypted during transport, in either direction?
+## Is my data encrypted during transport, in either direction?
 
 Yes, if you use https.  No, if you don't.
 
-# Is it secure from a man-in-middle attack?
+## Is it secure from a man-in-middle attack?
 
 Yes, if you use https, and have some way of validating the certificate from the browser side. Otherwise, not.
 
-# Can I use https?
+## Can I use https?
 
 Yes.  From the directory where you want to run securewebcmd, do:
 ```bash
@@ -84,11 +115,11 @@ rm csr.pem
 ... and connect to [https://localhost:8888](https://localhost:8888), instead of [http://localhost:8888](http://localhost:8888)
 * since it is using a self-signed certificate, you will need to accept the warnings that appear
 
-# If I use https, can people do a man-in-the middle attack etc?
+## If I use https, can people do a man-in-the middle attack etc?
 
 If you have some way of ensuring that the certificate you see from the browser is the one that the server is using, then tricky.  Otherwise, yes.
 
-# Why don't I just not use https, and stick with the md5 hash?
+## Why don't I just not use https, and stick with the md5 hash?
 
 Well, in http, everything you transmit is transmitted in clear, and so you're susceptible to replay attacks and so on.  In https, traffic is not easily readable, providing protection against passive attacks.
 
@@ -97,8 +128,6 @@ Well, in http, everything you transmit is transmitted in clear, and so you're su
 * nodejs (more a platform than a library I suppose?)
 * express
 * angular
-* bit of jquery
-* twitter bootstrap
-
-Angular is really awesome :-)  It's like Jinja2 for the front-end, works really well with ajax :-)
+* jquery
+* bootstrap
 
