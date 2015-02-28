@@ -233,7 +233,11 @@ function run2( request, response ) {
     job.onclose = [];
 //            job.onexit = [];
     job.dir = dir;
-    job.id = jobs[ jobs.length - 1].id + 1;
+    if( jobs.length > 0 ) {
+        job.id = jobs[ jobs.length - 1].id + 1;
+    } else {
+        job.id = 1;
+    }
     jobs[ jobs.length ] = job;
 //    job.id = jobs.length - 1;
     console.log('request received for new job:', job );
