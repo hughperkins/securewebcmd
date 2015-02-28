@@ -21,7 +21,6 @@
   - [If I use https, can people do a man-in-the middle attack etc?](#if-i-use-https-can-people-do-a-man-in-the-middle-attack-etc)
 - [What libraries/platforms does it use?](#what-librariesplatforms-does-it-use)
   - [Main libraries/platforms](#main-librariesplatforms)
-  - [Other dependencies](#other-dependencies)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -152,8 +151,5 @@ If you have some way of ensuring that the certificate you see from the browser i
 * [angular](https://angularjs.org/)
 * [jquery](http://jquery.com/)
 * [bootstrap](http://getbootstrap.com/)
-
-## Other dependencies
-
-* Please view [package.json](package.json)
+* A few others, please see: [package.json](package.json)
 
