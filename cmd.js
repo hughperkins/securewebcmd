@@ -22,10 +22,15 @@ var jquerypath = path.dirname( require.resolve('jquery') );
 var angularpath = path.dirname( require.resolve('angular' ) );
 var bootstrappath = path.dirname( path.dirname( require.resolve( 'bootstrap' ) ) );
 
-auth = true; // should be true for prod...
+var auth = true; // should be true for prod...
 if( process.env.NOAUTH == 1 ) {
     auth = false;
     console.log('WARNING: disabled authorization.  unset NOAUTH, and restart, to enable');
+}
+
+var showIframe = 'no'; // should be false for prod
+if( process.env.SHOWIFRAME == 1 ) {
+    showIframe = 'yes';
 }
 
 var jobs = [];
@@ -295,7 +300,7 @@ function getJob( request, response ) {
 
 function getJobs( request, response ) {
     response.writeHead(200, {'Content-type': 'application/json; charset=utf-8' } );
-    response.end( JSON.stringify( { 'result': 'success', 'jobs': listToFilteredList( jobs, ['done','cmd','id','state','args', 'dir'] ) } ) );
+    response.end( JSON.stringify( { 'showiframe': showIframe, 'result': 'success', 'jobs': listToFilteredList( jobs, ['done','cmd','id','state','args', 'dir'] ) } ) );
 }
 
 function kill( request, response ) {

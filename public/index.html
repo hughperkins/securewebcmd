@@ -59,11 +59,17 @@ $( function() {
             $('#cmdinput').val('');
         }
     });
+    $(document).keydown(function(e) {
+      if (e.keyCode == 27 ) {
+          e.preventDefault();
+      }
+    });
 });
 
 var app = angular.module('mainapp', [] );
 var intervalId = null;
 app.controller( 'maincontroller', function( $scope, $http ) {
+    $scope.myiframedisplay = 'none';
     $scope.refreshJobs = function() {
         var data = { 'checkpass': hashPassword( $scope.password ) };
         $http.post('/jobs', data ).success( function( data ) {
@@ -84,6 +90,11 @@ app.controller( 'maincontroller', function( $scope, $http ) {
                 }
             }
             $scope.jobs = jobs;
+            if( data.showiframe == 'yes' ) {
+                $scope.myiframedisplay = 'block';
+            } else {
+                $scope.myiframedisplay = 'none';
+            }
         });
     }
     $scope.launch = function() {
@@ -142,14 +153,26 @@ app.controller( 'maincontroller', function( $scope, $http ) {
         var newText = $('#myiframe').contents().text();
         if( newText == oldText ) {
             console.log('refreshoutput: no change => exiting');
+            $scope.checkJobs();
             return;
         }
         $('#outputdiv').html(newText.replace(/  /g, ' &nbsp;').replace(/\n/g, '<br />\n'));
         oldLength = newText.length;
         oldText = newText;
-        $scope.refreshJobs();
         //  console.log('exiting refreshoutput');
+        $scope.refreshJobs();
     }
+    $scope.checkJobs = function() {
+        var jobInProgress = false;
+        for( var i in $scope.jobs ) {
+            if( !$scope.jobs[i].done ) {
+                jobInProgress = true;
+            }
+        }
+        if( jobInProgress ) {
+            $scope.refreshJobs();
+        }
+    };
     $scope.doLogin = function() {
         console.log('$scope.doLogin()');
         $scope.refreshJobs();
@@ -157,6 +180,7 @@ app.controller( 'maincontroller', function( $scope, $http ) {
     $('#myiframe').load( function( event ) {
         console.log('iframe load start');
         $scope.refreshOutput();
+        $scope.checkJobs();
         //console.log('iframe load end');
     });
     intervalId = window.setInterval( function() {
@@ -274,7 +298,7 @@ app.controller( 'maincontroller', function( $scope, $http ) {
     </div>
 
 
-    <iframe height="450" width="1024" id="myiframe" style='display: none'>
+    <iframe height="450" width="1024" id="myiframe" style='display: {{myiframedisplay}}'>
     </iframe>
 
 </div>
