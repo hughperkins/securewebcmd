@@ -6,19 +6,19 @@
 - [Using](#using)
   - [Install](#install)
   - [Run](#run)
+  - [What if I launch a task while another is already running?](#what-if-i-launch-a-task-while-another-is-already-running)
   - [server-side options](#server-side-options)
     - [How to set options](#how-to-set-options)
     - [Available options](#available-options)
-  - [What if I run a task while another is already running?](#what-if-i-run-a-task-while-another-is-already-running)
-  - [Activate https](#activate-https)
+    - [Activate https](#activate-https)
 - [Security](#security)
   - [How is it secured?](#how-is-it-secured)
     - [In https mode?](#in-https-mode)
     - [In http mode?](#in-http-mode)
-  - [Is my data encrypted during transport, in either direction?](#is-my-data-encrypted-during-transport-in-either-direction)
-  - [Is it secure from a man-in-middle attack?](#is-it-secure-from-a-man-in-middle-attack)
-  - [If I use https, can people do a man-in-the middle attack etc?](#if-i-use-https-can-people-do-a-man-in-the-middle-attack-etc)
-- [What libraries does it use?](#what-libraries-does-it-use)
+    - [Is my data encrypted during transport, in either direction?](#is-my-data-encrypted-during-transport-in-either-direction)
+    - [Is it secure from a man-in-middle attack?](#is-it-secure-from-a-man-in-middle-attack)
+    - [If I use https, can people do a man-in-the middle attack etc?](#if-i-use-https-can-people-do-a-man-in-the-middle-attack-etc)
+- [What libraries/platforms does it use?](#what-librariesplatforms-does-it-use)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -122,19 +122,19 @@ rm csr.pem
     * this includes sending viewing any results in the history
   * read all the traffic (except the password)
 
-## Is my data encrypted during transport, in either direction?
+### Is my data encrypted during transport, in either direction?
 
 Yes, if you use https.  No, if you don't.
 
-## Is it secure from a man-in-middle attack?
+### Is it secure from a man-in-middle attack?
 
 Yes, if you use https, and have some way of validating the certificate from the browser side. Otherwise, not.
 
-## If I use https, can people do a man-in-the middle attack etc?
+### If I use https, can people do a man-in-the middle attack etc?
 
 If you have some way of ensuring that the certificate you see from the browser is the one that the server is using, then tricky.  Otherwise, yes.
 
-# What libraries does it use?
+# What libraries/platforms does it use?
 
 * nodejs
 * express
