@@ -6,7 +6,7 @@
 - [Using](#using)
   - [Install](#install)
   - [Run](#run)
-  - [What if I launch a task while another is already running?](#what-if-i-launch-a-task-while-another-is-already-running)
+    - [What if I launch a task while another is already running?](#what-if-i-launch-a-task-while-another-is-already-running)
   - [server-side options](#server-side-options)
     - [How to set options](#how-to-set-options)
     - [Available options](#available-options)
@@ -71,7 +71,7 @@ securewebcmd
 * you can kill the job by clicking 'kill' button next to the running job, in the 'History' section
 * you can view the results for any job, current or past, by clicking the 'Results' button, next to the job, in the 'History' section
 
-## What if I launch a task while another is already running?
+### What if I launch a task while another is already running?
 
 * it will be queued
 * it will start once the running task finishes, or if you kill the currently running task
