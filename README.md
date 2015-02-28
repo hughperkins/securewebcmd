@@ -71,6 +71,11 @@ securewebcmd
 * you can kill the job by clicking 'kill' button next to the running job, in the 'History' section
 * you can view the results for any job, current or past, by clicking the 'Results' button, next to the job, in the 'History' section
 
+## What if I launch a task while another is already running?
+
+* it will be queued
+* it will start once the running task finishes, or if you kill the currently running task
+
 ## server-side options
 
 ### How to set options
@@ -87,12 +92,7 @@ WHITELIST='ls pwd ./gpuinfo' securewebcmd
 | PORT=2000 | Change the port that securewebcmd listens on |
 | WHITELIST='ls pwd groups ./gpuinfo ./clconvolve1' | Create whitelist of allowed commands.  Note: ignores parameters, so `./clconvolve1` and `./clconvolve1 numtrain=128` will both be allowed by this example |
 
-## What if I run a task while another is already running?
-
-* it will be queued
-* it will start once the running task finishes, or you kill the currently running task
-
-## Activate https
+### Activate https
 
 From the directory where you want to run securewebcmd, do:
 ```bash
