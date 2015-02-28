@@ -74,7 +74,7 @@ securewebcmd
 
 ## server-side options
 
-### How to use options
+### How to set options
 
 * server-side options are passed in as environment-variables, eg:
 ```bash
@@ -97,11 +97,11 @@ WHITELIST='ls pwd ./gpuinfo' securewebcmd
 
 ## How is it secured?
 
-### In https mode:
+### In https mode?
 * everything is encrypted, by virtue of using https
 * all commands, including viewing, and running things, are password-protected (but the password is never sent to the server, just used to create a salted hash)
 
-### In http mode:
+### In http mode?
 * all commands, including viewing, and running things, are password-protected, using password hashes
 * so, it would be challenging for someone to run arbitrary commands against the server
 * however, in http mode, if someone can sniff the traffic they can:
