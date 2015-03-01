@@ -10,6 +10,7 @@
 <script src="md5/md5.min.js"></script>
 <script src="bootstrap/js/bootstrap.min.js"></script>
 <script src="angular/angular.min.js"></script>
+<script src="angular-resource/angular-resource.min.js"></script>
 <style>
 @media (min-width: 768px) {
   .modal-xl {
@@ -66,18 +67,15 @@ $( function() {
     });
 });
 
-var app = angular.module('mainapp', [] );
+var app = angular.module('mainapp', ['ngResource'] );
 var intervalId = null;
-app.controller( 'maincontroller', function( $scope, $http ) {
+app.controller( 'maincontroller', function( $scope, $http, $resource ) {
+    var Job = $resource('/api/jobs/:id', {id: '@id' } );
     $scope.myiframedisplay = 'none';
     $scope.getConfig = function() {
         $http.defaults.headers.common['Auth-Token'] = hashPassword( $scope.password );
         $http.get('/api/config' ).success( function( config ) {
-            if( config.showiframe == 'yes' ) {
-                $scope.myiframedisplay = 'block';
-            } else {
-                $scope.myiframedisplay = 'none';
-            }
+            $scope.config = config;
         }).error( function( data ) {
             console.log('failed to get config', data );
             //alert('Server not available, or password was not recognized.');
@@ -85,20 +83,14 @@ app.controller( 'maincontroller', function( $scope, $http ) {
     }
     $scope.refreshJobs = function() {
         $http.defaults.headers.common['Auth-Token'] = hashPassword( $scope.password );
-        $http.get('/api/jobs' ).success( function( jobs, status, headers ) {
-            console.log('status', status );
-            console.log('headers', headers() );
-            console.log('hide login modal...');
-            $('#loginmodal').modal('hide');
+        Job.query().$promise.then( function( jobs ) {
             $scope.jobs = jobs;
-        }).error( function( data, status, headers ) {
-            console.log('failed to get jobs', data );
-            console.log('status', status );
-            console.log('headers', headers() );
+            $('#loginmodal').modal('hide');
+        }).catch( function( error ) {
             if( status == 401 ) {
                 alert('Password was not recognized.');
             } else {
-                alert('Server not available.');
+                console.log('Server not available.', error.status, error.data );
             }
         });
     }
@@ -113,19 +105,13 @@ app.controller( 'maincontroller', function( $scope, $http ) {
         console.log(checksum);
 
         $http.defaults.headers.common['Auth-Token'] = checksum;
-        var job = { 'dir': $scope.dir, 'cmd': $scope.cmd };
-        console.log('submitting:', job );
-        $http.post('/api/jobs', job ).success( function( job, status, headers ) {
+        var job = new Job( { 'dir': $scope.dir, 'cmd': $scope.cmd } );
+        job.$save().then( function( job ) {
             console.log('jobs post result', job );
-            console.log('status', status );
-            console.log('headers', headers() );
             $scope.jobs.push(job);
             $scope.tail( job );
-            console.log('finished calling run2');
-        }).error( function( data, status, headers ) {
-            console.log('failed to post job', data );
-            //alert('Server not available, or password was not recognized.');
-            //return;
+        }).catch( function( error ) {
+            console.log('failed to post job', error.status, error.data );
         });
     }
     $scope.tail = function( job ) {
@@ -144,12 +130,12 @@ app.controller( 'maincontroller', function( $scope, $http ) {
     }
     $scope.remove = function( job ) {
         $http.defaults.headers.common['Auth-Token'] = hashPassword($scope.password);
-        $http.delete('/api/jobs/' + job.id ).success( function( data ) {
+        job.$delete().then( function( data ) {
             var index = getJobIndex( $scope.jobs, job.id );
             $scope.jobs.splice( index, 1 );
             console.log('delete succeed ', data);
-        }).error( function( data ) {
-            console.log('delete fail ', data);
+        }).catch( function( error ) {
+            console.log('delete fail ', result.status, result.data );
         });
     }
     $scope.kill = function( job ) {
@@ -219,8 +205,8 @@ app.controller( 'maincontroller', function( $scope, $http ) {
 });
 </script>
 </head>
-<body>
-<div class="container" ng-app="mainapp" ng-controller="maincontroller">
+<body ng-app="mainapp" ng-controller="maincontroller">
+<div class="container">
     <br />
     <div class="jumbotron">
      <h1>Secure Web Command</h1>
@@ -312,8 +298,7 @@ app.controller( 'maincontroller', function( $scope, $http ) {
         </div>
     </div>
 
-
-    <iframe height="450" width="1024" id="myiframe" style='display: {{myiframedisplay}}'>
+    <iframe height="450" width="1024" id="myiframe" ng-hide="config.showiframe != 'yes'">
     </iframe>
 
 </div>

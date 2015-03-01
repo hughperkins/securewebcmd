@@ -48,12 +48,8 @@ var queuedJobs = [];
 
 var schema = {
     properties: {
-        password: {
-            hidden: true
-        },
-        passwordcheck: {
-            hidden: true
-        }
+        password: { hidden: true },
+        passwordcheck: { hidden: true }
     }
 };
 
@@ -178,10 +174,6 @@ function runEvent( list, eventArg ) {
 function startJob( job ) {
     currentJob = job;
     job.state = 'running';
-//    var dir = job.dir;
-//    var cmd1 = job.cmd1;
-//    var args = job.args;
-    options = {cwd: job.dir }
 
     console.log('exe: [' + job.exe + ']');
     console.log('args: [' + job.args + '] length: ' + job.args.length );
@@ -205,6 +197,7 @@ function startJob( job ) {
 
     console.log('Starting job', job);
 
+    var options = {cwd: job.dir }
     if( job.args.length > 0 ) {
         console.log('has args: ' + job.args + '<br />');
         var cmdobj = spawn( job.exe, job.args, options );
@@ -238,51 +231,6 @@ function startJob( job ) {
         writeJobs();
     });
 }
-
-//function run2( request, response ) {
-//    response.writeHead(200, {'Content-type': 'application/json; charset=utf-8;' });
-//    var cmd = request.query2.cmd;
-//    var dir = request.query2.dir;
-//    if( auth ) {
-//        var theirCheck = request.query2.check;
-//        var stringToCheck = password + '||' + dir + '||' + cmd;
-//        var ourCheck = md5.md5( stringToCheck );
-//        if( theirCheck != ourCheck ) {
-//            response.end(JSON.stringify({'result': 'fail', 'error': 'checksum error' } ) );
-//            return;
-//        }
-//    }
-////            response.end();
-//    var splitcmd = cmd.split(' ' );
-//    var cmd1 = splitcmd[0].trim();
-//    var args = [];
-//    if( splitcmd.length > 1 ) {
-//        args = splitcmd.slice(1);
-//    }
-//    job = { 'cmd': cmd1, 'args': args, 'state': 'waiting', 'done': false, 'results': '', 'dir': dir };
-//    job.ondata = [];
-//    job.onclose = [];
-////            job.onexit = [];
-//    job.dir = dir;
-//    if( jobs.length > 0 ) {
-//        job.id = jobs[ jobs.length - 1].id + 1;
-//    } else {
-//        job.id = 1;
-//    }
-//    jobs[ jobs.length ] = job;
-//    console.log('request received for new job:', job );
-
-//    if( currentJob == null ) {
-//        startJob( job );
-//    } else {
-//        queuedJobs[ queuedJobs.length ] = job;
-//        job.state = 'queued';
-//    }
-
-//    var results = { 'id': job.id , 'result': 'success', 'cmd': job.cmd, 'args': job.args, 'done': job.done, 'state': job.state, 'dir': job.dir };
-////    console.log('results:', results );
-////    console.log('finished run2 method');
-//}
 
 function getJob( request, response ) {
     // sameorigin option means we can display it in iframe with no security issues
@@ -354,6 +302,7 @@ app.use( express.static(path.join( __dirname + '/public' ) ) ); // server pages 
 app.use( '/md5', express.static( md5path ) ); // serve md5 js pages
 app.use( '/jquery', express.static( jquerypath ) ); // serve jquery js pages
 app.use( '/angular', express.static( angularpath ) );
+app.use( '/angular-resource', express.static( path.dirname( require.resolve('angular-resource' ) ) ) );
 app.use( '/bootstrap', express.static( bootstrappath ) );
 app.get( '/', function( req, res ) {
     res.sendFile( __dirname + '/public/index.html' );
@@ -420,16 +369,16 @@ app.use( function( request, response, next ) {
         checkpass = request.headers['auth-token'];
     }
     if( typeof checkpass == 'undefined' || !checkPass( checkpass ) ) {
-        response.writeHead( 401 );
-        response.end();
+        response.writeHead( 401, { 'Content-type': 'application/json; charset=utf8;' } );
+        response.end(JSON.stringify({'detail': 'Unauthorized' } ) );
         return;
     }
     next();
 });
 function illegalRequest( description, res ) {
     console.log( description );
-    res.writeHead( 400 );
-    res.end();
+    res.writeHead( 400, { 'Content-type': 'application/json; charset=utf8;' } );
+    res.end(JSON.stringify({'detail': description }));
 }
 app.get('/api/jobs/:id/results', getJob );
 app.put('/api/jobs/:id', function( req, res ) {
@@ -461,14 +410,24 @@ app.put('/api/jobs/:id', function( req, res ) {
         res.end();
     }
 } );
+
+function writeSuccessMessage( res, status, message ) {
+//    console.log( message );
+    res.writeHead( status, { 'Content-type': 'application/json; charset=utf8;' } );
+    res.end( JSON.stringify( {'detail': message } ) );
+}
+function writeErrorMessage( res, status, message ) {
+    console.log( message );
+    res.writeHead( status, { 'Content-type': 'application/json; charset=utf8;' } );
+    res.end( JSON.stringify( {'detail': message } ) );
+}
+
 app.delete('/api/jobs/:id', function( req, res ) {
     var id = req.params.id;
     console.log('removing id: ' + id );
     var index = getJobIndex( id );
     if( index == -1 ) {
-        console.log('not found');
-        response.writeHead( 404 );
-        response.end();
+        writeErrorMessage( res, 'job id ' + id + ' not found' );
     } else {
         var job = jobs[index];
         if( job.state == 'running' ) {
@@ -476,8 +435,7 @@ app.delete('/api/jobs/:id', function( req, res ) {
             return;
         }
         jobs.splice( index, 1 );
-        res.writeHead(200);
-        res.end();
+        writeSuccessMessage( res, 200, 'deleted job id ' + id );
     }
 } );
 app.get('/api/config', function( req, res ) {
