@@ -135,12 +135,19 @@ app.controller( 'maincontroller', function( $scope, $http, $resource ) {
         });
     }
     $scope.kill = function( job ) {
-        $http.put('/api/jobs/' + job.id, { 'state': 'done' } ).success( function( data ) {
+        if( job.state != 'running' ) {
+            alert('Can only kill running jobs');
+            return;
+        }
+        var updatedJob = angular.copy( job );
+        updatedJob.state = 'done';
+        updatedJob.$save().then( function( data ) {
             console.log('kill success');
             job.done = true;
             job.state = 'done';
-        }).error( function( data ) {
-            console.log('kill fail ', data);
+            $scope.refreshJobs();
+        }).catch( function( error ) {
+            console.log('kill fail ', error.status, error.data );
         });
     }
     $scope.refreshOutput = function() {
@@ -235,8 +242,8 @@ app.controller( 'maincontroller', function( $scope, $http, $resource ) {
             <td>{{job.state}}</td>
             <td><button type="button" class="btn btn-default" ng-click="tail( job )">Results <span class="glyphicon glyphicon-envelope" ></span></button>
             <button type="button" class="btn btn-default" ng-click="copyArgs( job )">Copy cmd <span class="glyphicon glyphicon-edit" ></span></button>
-            <button type="button" class="btn btn-danger" ng-click="kill( job )" ng-hide="job.done == true">Kill <span class="glyphicon glyphicon-stop" ></span></button>
-            <button type="button" class="btn btn-danger" ng-click="remove( job )" ng-hide="job.done != true">Remove <span class="glyphicon glyphicon-trash" ></span></button>
+            <button type="button" class="btn btn-danger" ng-click="kill( job )" ng-show="job.state == 'running'">Kill <span class="glyphicon glyphicon-stop" ></span></button>
+            <button type="button" class="btn btn-danger" ng-click="remove( job )" ng-show="job.state != 'running'">Remove <span class="glyphicon glyphicon-trash" ></span></button>
         </tr>
         </table>
     </div>

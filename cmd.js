@@ -73,6 +73,10 @@ if( fs.existsSync( 'jobs.json' ) ) {
     jobs = JSON.parse(fs.readFileSync( 'jobs.json', 'utf8'));
 }
 
+function myEquals( a, b ) {
+    return JSON.stringify(a) == JSON.stringify(b);
+}
+
 function checkPass( checkpass ) {
     var splitcheckpass = checkpass.split('|');
     var salt = splitcheckpass[0];
@@ -95,6 +99,15 @@ function filterObject( item, properties ) {
         newItem[prop] = item[prop];
     }
     return newItem;
+}
+
+function objectIndex( targetList, object, keyName ) {
+    for( i in Object.keys( targetList ) ) {
+        if( targetList[i][keyName] == object[keyName] ) {
+            return i;
+        }
+    }
+    return -1;
 }
 
 function listToFilteredList( list, properties ) {
@@ -376,48 +389,52 @@ app.use( function( request, response, next ) {
     next();
 });
 function illegalRequest( description, res ) {
-    console.log( description );
-    res.writeHead( 400, { 'Content-type': 'application/json; charset=utf8;' } );
-    res.end(JSON.stringify({'detail': description }));
+    writeErrorMessage( res, 400, description );
 }
 app.get('/api/jobs/:id/results', getJob );
-app.put('/api/jobs/:id', function( req, res ) {
-    var keys = Object.keys( req.body );
-    if( keys.length != 1 ) {
-        illegalRequest( 'cant modify multiple state values', res );
-        return;
-    }
-    var key = keys[0];
-    if( key != 'state' ) {
-        illegalRequest( 'can only modify state value', res );
-        return;
-    }
-    var value = req.body[key];
-    if( value != 'done' ) {
-        illegalRequest( 'can only set state to done', res );
-        return;
-    }
+app.post('/api/jobs/:id', function( req, res ) {
+    var id = req.params.id;
+    var updatedJob = req.body;
+
     var index = getJobIndex( id );
     if( index == -1 ) {
-        console.log('not found');
-        res.writeHead( 404 );
-        res.end();
-    } else {
-        var job = jobs[index];
-        console.log('killing job ' + job.id );
-        job.cmdobj.kill();
-        res.writeHead(200);
-        res.end();
+        writeErrorMessage( res, 404, 'Job id ' + id + ' not found' );
+        return;
     }
+    var currentJob = jobs[index];
+
+    var changedKeys = [];
+    for( var key in updatedJob ) {
+        if( !myEquals( updatedJob[key], currentJob[key] ) ) {
+            changedKeys.push( key );
+        }
+    }
+    console.log( 'changed keys: ', changedKeys );
+    if( changedKeys.length != 1 || changedKeys[0] != 'state' ) {
+        writeErrorMessage( res, 400, 'can only modify \'state\' value' );
+        return;
+    }
+    if( currentJob.state != 'running' ) {
+        writeErrorMessage( res, 400, 'can only kill running jobs' );
+        return;
+    }
+    if( updatedJob.state != 'done' ) {
+        writeErrorMessage( res, 400, 'can only change state to \'done\'' );
+        return;
+    }
+    console.log('killing job ' + currentJob.id );
+    currentJob.cmdobj.kill();
+//    jobFinished( currentJob );
+    writeSuccessMessage( res, 200, 'killed job ' + id );
 } );
 
 function writeSuccessMessage( res, status, message ) {
-//    console.log( message );
+    console.log( 'OK ' + status + ' ' + message );
     res.writeHead( status, { 'Content-type': 'application/json; charset=utf8;' } );
     res.end( JSON.stringify( {'detail': message } ) );
 }
 function writeErrorMessage( res, status, message ) {
-    console.log( message );
+    console.log( 'FAIL ' + status + ' ' + message );
     res.writeHead( status, { 'Content-type': 'application/json; charset=utf8;' } );
     res.end( JSON.stringify( {'detail': message } ) );
 }
@@ -433,6 +450,10 @@ app.delete('/api/jobs/:id', function( req, res ) {
         if( job.state == 'running' ) {
             illegalRequest('cant remove a job that is running');
             return;
+        }
+        if( job.state == 'queued' ) {
+            var queuedIndex = objectIndex( queuedJobs, job, 'id' );
+            queuedJobs.splice( queuedIndex, 1 );
         }
         jobs.splice( index, 1 );
         writeSuccessMessage( res, 200, 'deleted job id ' + id );
