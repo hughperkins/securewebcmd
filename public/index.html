@@ -73,16 +73,14 @@ app.controller( 'maincontroller', function( $scope, $http, $resource ) {
     var Job = $resource('/api/jobs/:id', {id: '@id' } );
     $scope.myiframedisplay = 'none';
     $scope.getConfig = function() {
-        $http.defaults.headers.common['Auth-Token'] = hashPassword( $scope.password );
         $http.get('/api/config' ).success( function( config ) {
             $scope.config = config;
-        }).error( function( data ) {
-            console.log('failed to get config', data );
+        }).error( function( error ) {
+            console.log('failed to get config', error.status, error.data );
             //alert('Server not available, or password was not recognized.');
         });
     }
     $scope.refreshJobs = function() {
-        $http.defaults.headers.common['Auth-Token'] = hashPassword( $scope.password );
         Job.query().$promise.then( function( jobs ) {
             $scope.jobs = jobs;
             $('#loginmodal').modal('hide');
@@ -100,9 +98,7 @@ app.controller( 'maincontroller', function( $scope, $http, $resource ) {
             return;
         }
         var stringToCheck = ( $scope.password || '' ) + '||' + $scope.dir + '||' + $scope.cmd;
-        console.log(stringToCheck);
         var checksum = md5( stringToCheck );
-        console.log(checksum);
 
         $http.defaults.headers.common['Auth-Token'] = checksum;
         var job = new Job( { 'dir': $scope.dir, 'cmd': $scope.cmd } );
@@ -113,6 +109,7 @@ app.controller( 'maincontroller', function( $scope, $http, $resource ) {
         }).catch( function( error ) {
             console.log('failed to post job', error.status, error.data );
         });
+        $scope.updateAuthToken();
     }
     $scope.tail = function( job ) {
         oldText = '';
@@ -129,7 +126,6 @@ app.controller( 'maincontroller', function( $scope, $http, $resource ) {
         $scope.cmd = job.cmd; 
     }
     $scope.remove = function( job ) {
-        $http.defaults.headers.common['Auth-Token'] = hashPassword($scope.password);
         job.$delete().then( function( data ) {
             var index = getJobIndex( $scope.jobs, job.id );
             $scope.jobs.splice( index, 1 );
@@ -139,7 +135,6 @@ app.controller( 'maincontroller', function( $scope, $http, $resource ) {
         });
     }
     $scope.kill = function( job ) {
-        $http.defaults.headers.common['Auth-Token'] = hashPassword($scope.password);
         $http.put('/api/jobs/' + job.id, { 'state': 'done' } ).success( function( data ) {
             console.log('kill success');
             job.done = true;
@@ -178,30 +173,21 @@ app.controller( 'maincontroller', function( $scope, $http, $resource ) {
         $scope.getConfig();
         $scope.refreshJobs();
     }
+    $scope.updateAuthToken = function() {
+        var newToken = hashPassword($scope.password);
+        console.log('updating auth token to ' + newToken );
+        $http.defaults.headers.common['Auth-Token'] = newToken;
+    }
     $('#myiframe').load( function( event ) {
         console.log('iframe load start');
         $scope.refreshOutput();
         $scope.checkJobs();
-        //console.log('iframe load end');
     });
     intervalId = window.setInterval( function() {
-        //console.log('set interval start');
         $scope.refreshOutput();
-        //console.log('set interval end');
     }, 3000 );
 
-    // $scope.refreshJobs();
-    /*$('#resultsmodal').on('show.bs.modal', function(e) {
-        if( intervalId == null ) {
-             3000 );
-        }
-    });
-    $('#resultsmodal').on('hide.bs.modal', function(e) {
-        if( intervalId != null ) {
-            window.clearInterval( intervalId );
-            intervalId = null;
-        }
-    });*/
+    $scope.updateAuthToken();
 });
 </script>
 </head>
@@ -267,7 +253,7 @@ app.controller( 'maincontroller', function( $scope, $http, $resource ) {
                         <div class="form-group">
                             <label for="password" class="control-label col-xs-2">Password</label> 
                             <div class="col-xs-10">
-                                 <input type="password" id="passwordinput" ng-model="password" class="form-control" placeholder="password" />
+                                 <input type="password" ng-change="updateAuthToken()" id="passwordinput" ng-model="password" class="form-control" placeholder="password" />
                             </div>
                         </div>
                 </div>
