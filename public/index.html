@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+6<head>
 <title>Secure Web Command, by Hugh Perkins</title>
 <meta http-equiv="cache-control" content="no-cache" />
 <meta charset="utf-8" />
@@ -50,10 +50,16 @@ $( function() {
         $('#passwordinput').focus();
     });
     $('#loginmodal').on('hidden.bs.modal', function(e) {
-        $('#cmdinput').focus();
+        //$('#cmdinput').focus();
     });
     $('#resultsmodal').on('hidden.bs.modal', function(e) {
+        //$('#cmdinput').focus();
+    });
+    $('#submitmodal').on('shown.bs.modal', function(e) {
         $('#cmdinput').focus();
+    });
+    $('#submitmodal').on('hidden.bs.modal', function(e) {
+        //$('#showLaunchButton').focus();
     });
     $('#cmdinput').keyup( function(e) {
         if( e.keyCode == 27 ) {
@@ -61,10 +67,15 @@ $( function() {
         }
     });
     $(document).keydown(function(e) {
-      if (e.keyCode == 27 ) {
-          e.preventDefault();
-      }
+        if (e.keyCode == 27 ) {
+            e.preventDefault();
+        }
+        if( e.key == 'r' ) {
+            $('#cmdinput').val('');
+            $('#submitmodal').modal('show');
+        }
     });
+    //$('#submitmodal').modal('show');
 });
 
 var app = angular.module('mainapp', ['ngResource'] );
@@ -124,6 +135,9 @@ app.controller( 'maincontroller', function( $scope, $http, $resource ) {
         console.log( 'copyargs ', job );
         $scope.dir = job.dir;
         $scope.cmd = job.cmd; 
+        $('#dirinput').val(job.dir);
+        $('#cmdinput').val(job.cmd);
+        $('#submitmodal').modal('show');
     }
     $scope.remove = function( job ) {
         job.$delete().then( function( data ) {
@@ -195,39 +209,31 @@ app.controller( 'maincontroller', function( $scope, $http, $resource ) {
     }, 3000 );
 
     $scope.updateAuthToken();
+    $scope.showLaunch = function() {
+        $('#submitmodal').modal('show');
+<!--        $('#cmdinput').focus();-->
+    };
+
+    /*$( function() {
+        $('#loginmodal').modal('hide');
+        $scope.showLaunch();
+    });*/
 });
 </script>
 </head>
 <body ng-app="mainapp" ng-controller="maincontroller">
 <div class="container">
+<form>
     <br />
     <div class="jumbotron">
      <h1>Secure Web Command</h1>
     <p>Secure Web Command lets you run commands on your server through a simple standalone web server, using nodejs. Easy to setup, easy to use.
     </p>
     </div>
-    <h1>Launch</h1>
+    <h1>Run</h1>
     <br />
+        <button class="btn btn-primary" id="showLaunchButton" type="submit" title="shortcut: r" ng-click="showLaunch()">Run &raquo;</button>
     <br />
-    <form class="form-horizontal">
-        <div class="form-group">
-            <label class="control-label col-xs-2">Directory</label>
-            <div class="col-xs-10">
-                <input type="text" ng-model="dir" class="form-control col-xs-10" placeholder="working directory (can leave blank)" />
-            </div>
-        </div>
-        <div class="form-group">
-            <label class="control-label col-xs-2">Cmd</label>
-            <div class=" col-xs-10">
-                <input type="text" ng-model="cmd" id="cmdinput" class="form-control" placeholder="command to run" id="cmd" value="" />
-            </div>
-        </div>
-        <div class="form-group">
-            <div class="col-xs-2 col-xs-offset-2">
-                <button class="btn btn-primary" ng-click="launch()">Launch <span class="glyphicon glyphicon-play" /></button>
-            </div>
-        </div>
-    </form>
     <br />
     <h1>History</h1>
     <br />
@@ -241,13 +247,13 @@ app.controller( 'maincontroller', function( $scope, $http, $resource ) {
             <td>{{job.cmd}} {{job.joinedargs}}</td>
             <td>{{job.state}}</td>
             <td><button type="button" class="btn btn-default" ng-click="tail( job )">Results <span class="glyphicon glyphicon-envelope" ></span></button>
-            <button type="button" class="btn btn-default" ng-click="copyArgs( job )">Copy cmd <span class="glyphicon glyphicon-edit" ></span></button>
+            <button type="button" class="btn btn-default" ng-click="copyArgs( job )">Copy <span class="glyphicon glyphicon-edit" ></span></button>
             <button type="button" class="btn btn-danger" ng-click="kill( job )" ng-show="job.state == 'running'">Kill <span class="glyphicon glyphicon-stop" ></span></button>
             <button type="button" class="btn btn-danger" ng-click="remove( job )" ng-show="job.state != 'running'">Remove <span class="glyphicon glyphicon-trash" ></span></button>
         </tr>
         </table>
     </div>
-
+</form>
                     <form class="form-horizontal">
     <div class="modal fade" id="loginmodal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -285,6 +291,40 @@ app.controller( 'maincontroller', function( $scope, $http, $resource ) {
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-primary" data-dismiss="modal">Close</button>
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="submitmodal" tabindex="-1" role="dialog" aria-labelledby="submitmodallabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+            <form>
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="submitmodallabel">Run</h4>
+                </div>
+                <div class="modal-body">
+<!--                    <form class="form-horizontal">-->
+                        <div class="form-group">
+                            <label class="control-label">Directory</label>
+<!--                            <div class="col-xs-10">-->
+                                <input type="text" ng-model="dir" class="form-control col-xs-10" placeholder="working directory (can leave blank)" ></input>
+<!--                            </div>-->
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Cmd</label>
+<!--                            <div class=" col-xs-10">-->
+                                <input type="text" ng-model="cmd" id="cmdinput" class="form-control" placeholder="command to run" id="cmd" value="" ></input>
+<!--                            </div>-->
+                        </div>
+<!--                    </form>-->
+                
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" ng-click="launch()" class="btn btn-primary" data-dismiss="modal">Launch</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                 </div>
             </form>
             </div>
