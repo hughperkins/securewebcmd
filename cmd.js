@@ -316,6 +316,7 @@ app.use( '/md5', express.static( md5path ) ); // serve md5 js pages
 app.use( '/jquery', express.static( jquerypath ) ); // serve jquery js pages
 app.use( '/angular', express.static( angularpath ) );
 app.use( '/angular-resource', express.static( path.dirname( require.resolve('angular-resource' ) ) ) );
+app.use( '/thirdparty', express.static( __dirname + '/thirdparty' ) );
 app.use( '/bootstrap', express.static( bootstrappath ) );
 app.get( '/', function( req, res ) {
     res.sendFile( __dirname + '/public/index.html' );

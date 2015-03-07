@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-6<head>
+<head>
 <title>Secure Web Command, by Hugh Perkins</title>
 <meta http-equiv="cache-control" content="no-cache" />
 <meta charset="utf-8" />
@@ -11,6 +11,7 @@
 <script src="bootstrap/js/bootstrap.min.js"></script>
 <script src="angular/angular.min.js"></script>
 <script src="angular-resource/angular-resource.min.js"></script>
+<script src="thirdparty/ngStorage.min.js"></script>
 <style>
 @media (min-width: 768px) {
   .modal-xl {
@@ -45,7 +46,7 @@ var oldLength = 0;
 var oldText = '';
 
 $( function() {
-    $('#loginmodal').modal({'show': true, 'keyboard': false });
+    //$('#loginmodal').modal({'show': true, 'keyboard': false });
     $('#loginmodal').on('shown.bs.modal', function(e) {
         $('#passwordinput').focus();
     });
@@ -78,9 +79,9 @@ $( function() {
     //$('#submitmodal').modal('show');
 });
 
-var app = angular.module('mainapp', ['ngResource'] );
+var app = angular.module('mainapp', ['ngResource', 'ngStorage'] );
 var intervalId = null;
-app.controller( 'maincontroller', function( $scope, $http, $resource ) {
+app.controller( 'maincontroller', function( $scope, $http, $resource, $sessionStorage ) {
     var Job = $resource('/api/jobs/:id', {id: '@id' } );
     $scope.myiframedisplay = 'none';
     $scope.getConfig = function() {
@@ -95,9 +96,14 @@ app.controller( 'maincontroller', function( $scope, $http, $resource ) {
         Job.query().$promise.then( function( jobs ) {
             $scope.jobs = jobs;
             $('#loginmodal').modal('hide');
+            $sessionStorage.password = $scope.password;
         }).catch( function( error ) {
-            if( status == 401 ) {
-                alert('Password was not recognized.');
+            if( error.status == 401 ) {
+                if( $('#loginmodal').hasClass('in') ) {
+                    alert('Password was not recognized.');
+                }
+                $('#loginmodal').modal('show');
+                $('#passwordinput').focus();
             } else {
                 console.log('Server not available.', error.status, error.data );
             }
@@ -208,16 +214,26 @@ app.controller( 'maincontroller', function( $scope, $http, $resource ) {
         $scope.refreshOutput();
     }, 3000 );
 
-    $scope.updateAuthToken();
     $scope.showLaunch = function() {
         $('#submitmodal').modal('show');
-<!--        $('#cmdinput').focus();-->
+        // $('#cmdinput').focus();
     };
-
+    if( typeof $sessionStorage.password != 'undefined' ) {
+        $scope.password = $sessionStorage.password;
+        // $scope.updateAuthToken();
+    }
+    $scope.updateAuthToken();
+    $scope.refreshJobs();
     /*$( function() {
         $('#loginmodal').modal('hide');
         $scope.showLaunch();
     });*/
+    $scope.logout = function() {
+        delete $sessionStorage.password;
+        $scope.password = '';
+        $scope.updateAuthToken();
+        $('#loginmodal').modal('show');
+    };
 });
 </script>
 </head>
@@ -229,12 +245,12 @@ app.controller( 'maincontroller', function( $scope, $http, $resource ) {
      <h1>Secure Web Command</h1>
     <p>Secure Web Command lets you run commands on your server through a simple standalone web server, using nodejs. Easy to setup, easy to use.
     </p>
+        <center>
+<button class="btn btn-success" id="showLaunchButton" type="submit" title="shortcut: r" ng-click="showLaunch()">Run &raquo;</button>
+  &nbsp;&nbsp;&nbsp;
+<button class="btn btn-default" type="button" ng-click="logout()">Logout</button>
+</center>
     </div>
-    <h1>Run</h1>
-    <br />
-        <button class="btn btn-primary" id="showLaunchButton" type="submit" title="shortcut: r" ng-click="showLaunch()">Run &raquo;</button>
-    <br />
-    <br />
     <h1>History</h1>
     <br />
     <button type="button" class="btn btn-default" ng-click="refreshJobs()">Refresh <span class="glyphicon glyphicon-refresh" ></span></button><br />
