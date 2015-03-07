@@ -72,8 +72,10 @@ $( function() {
             e.preventDefault();
         }
         if( e.key == 'r' ) {
-            $('#cmdinput').val('');
-            $('#submitmodal').modal('show');
+            if( !$('#submitmodal').hasClass('in') ) {
+                $('#cmdinput').val('');
+                $('#submitmodal').modal('show');
+            } // else, ignore
         }
     });
     //$('#submitmodal').modal('show');
