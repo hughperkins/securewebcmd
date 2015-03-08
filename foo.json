@@ -1,0 +1,1 @@
+[{"id":1,"cmd":"pwd","args":[],"done":true,"results":"/data/norep/git/securewebcmd\nchild process exited with code: 0\n","state":"done"},{"id":2,"cmd":"ls","args":[],"done":true,"results":"bin\ncmd.js\nfoo.json\njobs.json\nLICENSE\nnode_modules\nnotes\npackage.json\npublic\nREADME.md\nscreenshots\nthirdparty\nchild process exited with code: 0\n","state":"done"}]

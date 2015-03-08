@@ -99,6 +99,7 @@ WHITELIST='ls pwd ./gpuinfo' securewebcmd
 |---------|-------------|
 | PORT=2000 | Change the port that securewebcmd listens on |
 | WHITELIST='ls pwd groups ./gpuinfo ./clconvolve1' | Create whitelist of allowed commands.  Note: ignores parameters, so `./clconvolve1` and `./clconvolve1 numtrain=128` will both be allowed by this example |
+| JOBSFILE | Path to jobs json file, default is `jobs.json` |
 
 ### Activate https
 

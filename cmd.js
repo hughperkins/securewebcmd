@@ -39,6 +39,12 @@ if( typeof process.env.WHITELIST != 'undefined' ) {
     console.log('whitelist activated, list: ' + whitelist );
 }
 
+var jobsFilepath = 'jobs.json';
+if( typeof process.env.JOBSFILE != 'undefined' ) {
+    jobsFilepath = process.env.JOBSFILE;
+    console.log('settings jobs filepath to ' + jobsFilepath );
+}
+
 var port = process.env.PORT || 8888;
 console.log('Using port: ' + port );
 
@@ -69,8 +75,8 @@ if( auth ) {
     startServer();
 }
             
-if( fs.existsSync( 'jobs.json' ) ) {
-    jobs = JSON.parse(fs.readFileSync( 'jobs.json', 'utf8'));
+if( fs.existsSync( jobsFilepath ) ) {
+    jobs = JSON.parse(fs.readFileSync( jobsFilepath, 'utf8'));
 }
 
 function myEquals( a, b ) {
@@ -159,11 +165,8 @@ function writeJobs() {
     jobsToWrite = filterList( jobsToWrite, 'state', 'queued' );
     setListAttr( jobsToWrite, 'done', true );
     setListAttr( jobsToWrite, 'state', 'done' );
-    fs.writeFileSync( 'tempjobs.json', JSON.stringify(jobsToWrite), 'utf8' );
-    if( fs.existsSync( 'jobs.json' ) ) {
-        //fs.unlinkSync( 'jobs.json' );
-    }
-    fs.renameSync( 'tempjobs.json', 'jobs.json' );
+    fs.writeFileSync( jobsFilepath + '~', JSON.stringify(jobsToWrite), 'utf8' );
+    fs.renameSync( jobsFilepath + '~', jobsFilepath );
 }
 
 function jobFinished( job ) {
@@ -486,7 +489,7 @@ function startServer() {
                 response.end('something went wrong ' + e);
             }
         } ).listen(port);
-        console.log('key.pem and cert.pem detected: started using https protocol, use https:// to connect, port ' + port );
+        console.log('Using https, since key.pem and cert.pem present.  All communications will be encrypted using ssl. Use https:// to connect, port ' + port );
     } else {
         http.createServer( function(request, response) {
             try {
@@ -496,7 +499,7 @@ function startServer() {
                 response.end('something went wrong ' + e);
             }
         } ).listen(port);
-        console.log('key.pem and cert.pem not detected: started using http protocol, use http:// to connect, port ' + port );
+        console.log('Using http, since key.pem and cert.pem not present. Use http:// to connect, port ' + port );
     }
 }
 
