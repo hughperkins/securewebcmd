@@ -380,7 +380,7 @@ app.use( function( request, response, next ) {
         return;
     }
     // add filter for password
-    console.log( request.path );
+    //console.log( request.path );
     var checkpass = request.query2.checkpass;
     if( 'auth-token' in request.headers ) {
         checkpass = request.headers['auth-token'];
